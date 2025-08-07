@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="default_color_choice_values" translatable="false">
+        <item>#EF5350</item>
+        <item>#EC407A</item>
+        <item>#9C27B0</item>
+        <item>#673AB7</item>
+        <item>#3F51B5</item>
+        <item>#1E88E5</item>
+        <item>#0288D1</item>
+        <item>#29B6F6</item>
+        <item>#009688</item>
+        <item>#43A047</item>
+        <item>#7CB342</item>
+        <item>#CDDC39</item>
+        <item>#FDD835</item>
+        <item>#FFD54F</item>
+        <item>#FFC107</item>
+        <item>#FF5722</item>
+        <item>#8D6E63</item>
+        <item>#5D4037</item>
+        <item>#78909C</item>
+        <item>#cccccc</item>
+    </string-array>
+</resources>

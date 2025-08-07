@@ -1,0 +1,355 @@
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:card_view="http://schemas.android.com/tools"
+        android:id="@+id/fireTopLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorPrimary"
+        android:keepScreenOn="true">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/common_margin"
+            android:padding="@dimen/large_margin"
+            app:cardUseCompatPadding="true"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:cardCornerRadius="10dp"
+            card_view:cardCornerRadius="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingTop="@dimen/large_margin"
+                    android:paddingRight="@dimen/large_margin"
+                    android:paddingLeft="@dimen/large_margin">
+
+                    <TextView
+                        android:id="@+id/txtDirectionLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/large_margin"
+                        android:text="Direction"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/big_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtDirectionSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/large_margin"
+                        android:text="Horizontal"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/small_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtDirectionLabel" />
+
+                    <com.time.freezer.base.view.toggle.ToggleButtonLayout
+                        android:id="@+id/toggleDirection"
+                        android:layout_width="80dp"
+                        android:layout_height="@dimen/puzzle_setup_button_size"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_margin="@dimen/large_margin"
+                        app:allowDeselection="false"
+                        app:cardBackgroundColor="@color/timberwolf"
+                        app:dividerColor="@color/darksilver"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:menu="@menu/scan_direction"
+                        app:toggleMode="even"
+                        app:multipleSelection="false"
+                        app:selectedColor="@color/selectedColor" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingTop="@dimen/large_margin"
+                    android:paddingRight="@dimen/large_margin"
+                    android:paddingLeft="@dimen/large_margin">
+
+                    <TextView
+                        android:id="@+id/txtShapeLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/large_margin"
+                        android:text="Shape"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/big_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtShapeSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/large_margin"
+                        android:text="Line"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/small_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtShapeLabel" />
+
+                    <com.time.freezer.base.view.toggle.ToggleButtonLayout
+                        android:id="@+id/toggleShape"
+                        android:layout_width="120dp"
+                        android:layout_height="@dimen/puzzle_setup_button_size"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_margin="@dimen/small_text"
+                        app:allowDeselection="false"
+                        app:cardBackgroundColor="@color/timberwolf"
+                        app:dividerColor="@color/darksilver"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:menu="@menu/scan_shape"
+                        app:multipleSelection="false"
+                        app:toggleMode="even"
+                        app:selectedColor="@color/selectedColor" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingTop="@dimen/large_margin"
+                    android:paddingRight="@dimen/large_margin"
+                    android:paddingLeft="@dimen/large_margin">
+
+                    <TextView
+                        android:id="@+id/txtSeedLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/large_margin"
+                        android:text="Speed"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/big_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtSeedSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/large_margin"
+                        android:text="1x"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/small_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtSeedLabel" />
+
+                    <com.time.freezer.base.view.toggle.ToggleButtonLayout
+                        android:id="@+id/toggleSpeed"
+                        android:layout_width="120dp"
+                        android:layout_height="@dimen/puzzle_setup_button_size"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_margin="@dimen/large_margin"
+                        app:allowDeselection="false"
+                        app:cardBackgroundColor="@color/timberwolf"
+                        app:dividerColor="@color/darksilver"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:menu="@menu/scan_speed"
+                        app:multipleSelection="false"
+                        app:selectedColor="@color/selectedColor"
+                        app:toggleMode="even" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingTop="@dimen/large_margin"
+                    android:paddingRight="@dimen/large_margin"
+                    android:paddingLeft="@dimen/large_margin">
+
+                    <TextView
+                        android:id="@+id/txtColorLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/large_margin"
+                        android:text="Color"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/big_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtColorSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/large_margin"
+                        android:text="None"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/small_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtColorLabel" />
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/imagColorSelector"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_margin="@dimen/large_margin"
+                        android:src="@drawable/color_selection"
+                        app:civ_border_color="@color/colorPrimary"
+                        app:civ_border_width="3dp"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingTop="@dimen/large_margin"
+                    android:paddingRight="@dimen/large_margin"
+                    android:paddingLeft="@dimen/large_margin">
+
+                    <TextView
+                        android:id="@+id/txtSaveImageLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/large_margin"
+                        android:text="Save Image"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/big_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtSaveImageSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/large_margin"
+                        android:text="Save final image to gallery"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/small_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtSaveImageLabel" />
+
+                    <com.time.freezer.base.view.toggle.ToggleButtonLayout
+                        android:id="@+id/toggleSaveImage"
+                        android:layout_width="40dp"
+                        android:layout_height="@dimen/puzzle_setup_button_size"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_margin="@dimen/large_margin"
+                        app:allowDeselection="true"
+                        app:cardBackgroundColor="@color/timberwolf"
+                        app:dividerColor="@color/darksilver"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:menu="@menu/scan_saveimage"
+                        app:toggleMode="even"
+                        app:multipleSelection="false"
+                        app:selectedColor="@color/selectedColor" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="@dimen/large_margin">
+
+                    <TextView
+                        android:id="@+id/txtFilterLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/large_margin"
+                        android:text="Filter"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/big_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtFilterSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/large_margin"
+                        android:text="None"
+                        app:icon="@drawable/filter"
+                        android:textColor="@color/black_coral"
+                        android:textSize="@dimen/small_text"
+                        android:textStyle="bold"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtFilterLabel" />
+
+
+                    <com.time.freezer.base.view.toggle.ToggleButtonLayout
+                        android:id="@+id/toggleFilter"
+                        android:layout_width="40dp"
+                        android:layout_height="@dimen/puzzle_setup_button_size"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_margin="@dimen/large_margin"
+                        app:allowDeselection="true"
+                        app:cardBackgroundColor="@color/timberwolf"
+                        app:dividerColor="@color/darksilver"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:menu="@menu/scan_filter"
+                        app:toggleMode="even"
+                        app:multipleSelection="false"
+                        app:selectedColor="@color/selectedColor" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/large_margin"
+            app:layout_constraintTop_toBottomOf="@id/card_view"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:text="Start Freezer"
+            android:textColor="@color/colorPrimaryDark"
+            android:backgroundTint="@color/selectedColor"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Button"
+            android:theme="@style/MatButton"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/common_margin"
+            android:textSize="@dimen/small_text"
+            app:layout_constraintTop_toBottomOf="@id/btnStart"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:text="Open Freezer"
+            android:textColor="@color/colorPrimaryDark"
+            android:backgroundTint="@color/selectedColor"
+            android:theme="@style/MatButton"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <include android:id="@+id/filiterPanel" layout="@layout/filiter_panel" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

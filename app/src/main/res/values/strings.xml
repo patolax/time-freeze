@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">TimeFreezer</string>
+    <string name="direction_horizontal">Horizontal</string>
+    <string name="direction_vertical">Vertical</string>
+    <string name="speed_1x">1x</string>
+    <string name="speed_2x">2x</string>
+    <string name="speed_3x">3x</string>
+    <string name="shape_line">Line</string>
+    <string name="shape_curve">Curve</string>
+    <string name="shape_zigzag">ZigZag</string>
+
+    <string name="save_image">Save final result to gallery</string>
+    <string name="dont_save">Do not save</string>
+
+    <string name="shurajcodx_app_name" translatable="false">Rate TimeFreezer</string>
+    <string name="shurajcodx_rating_dialog_title">Rate TimeFreezer</string>
+    <string name="shurajcodx_rating_dialog_subtitle">As a favor, would you mind taking a moment to rate this app? Your comments help others to know what to expect from this app. Thank you!</string>
+    <string name="shurajcodx_rating_dialog_ok">Rate now</string>
+    <string name="shurajcodx_rating_dialog_cancel">Later</string>
+    <string name="shurajcodx_rating_dialog_never">No, Thanks</string>
+</resources>

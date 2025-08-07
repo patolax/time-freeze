@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <VideoView
+        android:id="@+id/vidView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/imgShare"
+        android:layout_margin="@dimen/large_margin"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/share"
+        app:fabCustomSize="32dp"
+        app:maxImageSize="18dp"
+        app:fabSize="mini"
+        android:tint="@color/snow"
+        android:layout_gravity="bottom|end"
+        android:background="@drawable/share"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

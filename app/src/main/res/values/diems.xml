@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="color_swatch_large">64dp</dimen>
+    <dimen name="color_swatch_small">48dp</dimen>
+    <dimen name="color_swatch_margins_large">8dip</dimen>
+    <dimen name="color_swatch_margins_small">4dip</dimen>
+
+    <dimen name="fourty_margin">48dp</dimen>
+    <dimen name="ddble_margin">32dp</dimen>
+    <dimen name="twenty_margin">24dp</dimen>
+    <dimen name="default_margin">16dp</dimen>
+    <dimen name="half_default_margin">8dp</dimen>
+    <dimen name="small_margin">2dp</dimen>
+    <dimen name="common_margin">5dp</dimen>
+    <dimen name="large_margin">10dp</dimen>
+    <dimen name="elevation">5dp</dimen>
+
+    <dimen name="default_text">14sp</dimen>
+    <dimen name="small_text">11sp</dimen>
+    <dimen name="medium_text">14sp</dimen>
+    <dimen name="increased_text">16sp</dimen>
+    <dimen name="big_text">18sp</dimen>
+    <dimen name="button_size">42dp</dimen>
+    <dimen name="small_button_size">24dp</dimen>
+    <dimen name="medium_button_size">32dp</dimen>
+    <dimen name="button_size_panel_height">72dp</dimen>
+    <dimen name="list_prfile_image_size">45dp</dimen>
+    <dimen name="list_prfile_layout_height">100dp</dimen>
+    <dimen name="jiggy_msg_image_size">150dp</dimen>
+
+    <dimen name="puzzle_setup_button_size">40dp</dimen>
+    <dimen name="profile_image_size">100dp</dimen>
+    <dimen name="login_logo">80dp</dimen>
+
+    <dimen name="finish_animation_top_margin">15dp</dimen>
+    <dimen name="finish_animation_control_height">35dp</dimen>
+    <dimen name="puzzlesettings_wdith">30dp</dimen>
+    <dimen name="subtitlebar_height">30dp</dimen>
+
+    <dimen name="chat_control_button_size">32dp</dimen>
+    <dimen name="editor_size">35dp</dimen>
+
+    <dimen name="seek_thumb_size">20dp</dimen>
+
+
+    <dimen name="onboarding_image_size">200dp</dimen>
+
+    <dimen name="standard_45">45dp</dimen>
+    <dimen name="standard_55">65dp</dimen>
+    <dimen name="standard_105">115dp</dimen>
+    <dimen name="standard_155">165dp</dimen>
+</resources>

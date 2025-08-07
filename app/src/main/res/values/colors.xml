@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#616161</color>
+    <color name="colorPrimaryDark">#212121</color>
+    <color name="colorAccent">#29B6F6</color>
+    <color name="recordButtonColor">#ff1919</color>
+    <color name="recordButtonClickColor">#ff7f7f</color>
+    <color name="transparent">@android:color/transparent</color>
+    <color name="selectedColor">#7fc8f8</color>
+    <color name="backgroundColor">#efefef</color>
+
+    <color name="text_color">#ffffffff</color>
+    <color name="meColor">#6e5fb2</color>
+    <color name="youColor">#dbd7d2</color>
+    <color name="colorPrimaryWithAlpha">#30311b92</color>
+
+
+    <color name="snow">#ffffffff</color>
+    <color name="background_gray">#edecf0</color>
+    <color name="yesterday_snow">#c6ffffff</color>
+    <color name="black">#ff000000</color>
+    <color name="green">#3CB371</color>
+    <color name="timberwolf">#dbd7d2</color>
+    <color name="fadedgrey">#FFdbd7d2</color>
+    <color name="darksilver">#afaca8</color>
+    <color name="oxford_blue">#002147</color>
+    <color name="black_coral">#54626F</color>
+    <color name="chinese_silver">#CCCCCC</color>
+    <color name="black_olive">#3B3C36</color>
+    <color name="black_olive_alpha">#903B3C36</color>
+    <color name="baby_pink_trans">#e0f1e2e2</color>
+    <color name="file_you_color">#97ae4244</color>
+    <color name="file_me_color">#4F86F7</color>
+
+    <color name="colorRed">#ff3232</color>
+    <color name="goldcolor">#fdd835</color>
+
+    <color name="black_color_picker">#000000</color>
+    <color name="white_color_picker">#FFFFFF</color>
+    <color name="sky_blue_color_picker">#53c4f7</color>
+    <color name="brown_color_picker">#AF593E</color>
+    <color name="green_color_picker">#01A368</color>
+    <color name="orange_color_picker">#FF861F</color>
+    <color name="red_color_picker">#ED0A3F</color>
+    <color name="red_orange_color_picker">#FF3F34</color>
+    <color name="violet_color_picker">#8359A3</color>
+    <color name="yellow_color_picker">#FBE870</color>
+    <color name="yellow_green_color_picker">#C5E17A</color>
+    <color name="tool_bg">#151414</color>
+    <color name="blue_color_picker">#0066FF</color>
+</resources>

@@ -1,0 +1,118 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/recordingMainLayout"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".MainActivity">
+
+    <com.time.freezer.base.view.RecordableSurfaceView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <RelativeLayout
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="95dp">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabLastVid"
+            android:layout_margin="@dimen/large_margin"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentBottom="true"
+            android:src="@drawable/gallery"
+            app:fabCustomSize="48dp"
+            app:maxImageSize="28dp"
+            app:fabSize="mini"
+            android:tint="@color/snow"
+            android:backgroundTint="@color/transparent"
+            app:backgroundTint="@color/transparent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:elevation="0dp"
+            app:pressedTranslationZ="12dp"/>
+
+        <RelativeLayout
+            android:id="@+id/btn_record"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/fab_border"
+            android:layout_marginBottom="30dp"
+            android:clickable="true">
+
+            <LinearLayout
+                android:id="@+id/circle_shape"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:background="@drawable/circle_button"/>
+
+            <LinearLayout
+                android:id="@+id/square_button"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:orientation="horizontal"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:visibility="invisible"
+                android:background="@drawable/square_button"/>
+
+        </RelativeLayout>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabSwap"
+            android:layout_margin="@dimen/large_margin"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/flip"
+            app:fabCustomSize="48dp"
+            app:maxImageSize="28dp"
+            app:fabSize="mini"
+            android:tint="@color/snow"
+            android:backgroundTint="@color/transparent"
+            app:backgroundTint="@color/transparent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:elevation="0dp"
+            app:pressedTranslationZ="12dp"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/loadingLayout"
+        android:background="@color/colorPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ProgressBar
+            android:id="@+id/simpleProgressBar"
+            android:layout_gravity="center"
+            android:layout_centerInParent="true"
+            android:indeterminateTint="@color/snow"
+            android:progressTint="@color/selectedColor"
+            android:layout_width="50dp"
+            android:layout_height="50dp" />
+
+        <TextView
+            android:layout_below="@+id/simpleProgressBar"
+            android:text="Preparing"
+            android:textStyle="bold"
+            android:textColor="@color/selectedColor"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/common_margin"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+</RelativeLayout>

@@ -1,0 +1,228 @@
+[
+  {
+    "name": "com.time.freezer.filters.NoFilter",
+    "title": "No",
+    "icon": "none",
+    "preview": "https://youtu.be/l8xR5XiTXmM",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.FakeFilter",
+    "title": "Fake",
+    "icon": "fake",
+    "preview": "https://youtu.be/4nhh9q0GXCs",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.InvertFilter",
+    "title": "Zombie",
+    "icon": "zombie",
+    "preview": "https://youtu.be/n9scwJwg7fM",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.BlackWhiteFilter",
+    "title": "Black n White",
+    "icon": "blacknwhite",
+    "preview": "https://youtu.be/tXCpykv5ReM",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.BlurFilter",
+    "title": "Blur",
+    "icon": "blur",
+    "preview": "https://youtu.be/IlvP1TZ-Pw8",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.ThresholdFilter",
+    "title": "Threshold",
+    "icon": "threshold",
+    "preview": "https://youtu.be/jAOfK4PO0UE",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.SepiaFilter",
+    "title": "Night Vision",
+    "icon": "nightvision",
+    "preview": "https://youtu.be/k6DqUsdQ5v4",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"false"
+  },
+  {
+    "name": "com.time.freezer.filters.OldFilter",
+    "title": "Vintage",
+    "icon": "vintage",
+    "preview": "https://youtu.be/NxHzl37mJzU",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.BannerFilter",
+    "title": "Bar",
+    "icon": "bar",
+    "preview": "https://youtu.be/UUhHbdoHl4o",
+    "isFullImageFilter":"false",
+    "directional":"true",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.MosaicFilter",
+    "title": "Adults Only",
+    "icon": "adults",
+    "preview": "https://youtu.be/t2adZ7dptsA",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.BigBrotherFilter",
+    "title": "Weaved",
+    "icon": "weaved",
+    "preview": "https://youtu.be/joBj7CWUZ80",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.ColorQuantizeFilter",
+    "title": "Photo Reel",
+    "icon": "reel",
+    "preview": "https://youtu.be/nM0Dud7X6ec",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.LightFilter",
+    "title": "Spotlight",
+    "icon": "spotlight",
+    "preview": "https://youtu.be/LuamizEJbY4",
+    "isFullImageFilter":"true",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.ColorToneFilter",
+    "title": "Avatar",
+    "icon": "avatar",
+    "preview": "https://youtu.be/1mf1eXFCAi4",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.NoiseFilter",
+    "title": "Noise",
+    "icon": "noise",
+    "preview": "https://youtu.be/UhWKAr992EI",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.OilPaintFilter",
+    "title": "Oil Paint",
+    "icon": "oil",
+    "preview": "https://youtu.be/bGwZ0Nig5Q4",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.ParamEdgeDetectFilter",
+    "title": "Edge",
+    "icon": "edge",
+    "preview": "https://youtu.be/R_XmBbHr68Q",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.PosterizeFilter",
+    "title": "Poster",
+    "icon": "poster",
+    "preview": "https://youtu.be/ERpHTh8dK9s",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.PixelateFilter",
+    "title": "Censored",
+    "icon": "censored",
+    "preview": "https://youtu.be/-GKE7aVPkRs",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.RadialDistortionFilter",
+    "title": "Big Nose",
+    "icon": "bignose",
+    "preview": "https://youtu.be/RMLhbentZG4",
+    "isFullImageFilter":"true",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.ReflectionFilter",
+    "title": "Identical Twins",
+    "icon": "twins",
+    "preview": "https://youtu.be/ehthtp3voSw",
+    "isFullImageFilter":"false",
+    "directional":"true",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.SaturationModifyFilter",
+    "title": "Saturation",
+    "icon": "saturation",
+    "preview": "https://youtu.be/Tx_GNZt9oIA",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.ThreeDGridFilter",
+    "title": "Fishing Net",
+    "icon": "net",
+    "preview": "https://youtu.be/TeMaaOm2GME",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.TintFilter",
+    "title": "Ghost",
+    "icon": "ghost",
+    "preview": "https://youtu.be/7h83UUwUMxw",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  },
+  {
+    "name": "com.time.freezer.filters.BackgroundImageFilter",
+    "title": "Custom Image",
+    "icon": "browse",
+    "preview": "https://youtu.be/QC5aKvZtJac",
+    "isFullImageFilter":"false",
+    "directional":"false",
+    "isPremium":"true"
+  }
+]

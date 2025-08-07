@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "938938727481",
+    "project_id": "time-freezer",
+    "storage_bucket": "time-freezer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:938938727481:android:741ed0848f45fabf9c21e8",
+        "android_client_info": {
+          "package_name": "com.time.freezer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "938938727481-ufl9gth72df6om4ig2qdfobqi22ltc5d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyqahXqPvEsmipmdJhWef-dd6ZnYVqn0E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "938938727481-ufl9gth72df6om4ig2qdfobqi22ltc5d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
