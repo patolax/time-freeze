@@ -17,7 +17,7 @@ public abstract class Slicer {
     protected Rect scrollingSliceRect;
     protected Rect rawSliceRect;
     protected Rect scannerRect;
-    protected int increment = 5;
+    protected int increment = 2;
     protected int scannerWidth = 10;
     protected Point currentScannerPoint;
     protected Paint paintAntiAlias;
@@ -42,6 +42,14 @@ public abstract class Slicer {
     public abstract void drawSlice(Bitmap input, Bitmap output, IImageFilter filter);
 
     public abstract void drawScanner(Canvas canvas);
+
+    public int getCurrentScannerY() {
+        return currentScannerPoint != null ? currentScannerPoint.y : 0;
+    }
+
+    public int getIncrement() { return increment; }
+
+    public int getScannerWidth() { return scannerWidth; }
 
     public abstract boolean isScanDone();
 

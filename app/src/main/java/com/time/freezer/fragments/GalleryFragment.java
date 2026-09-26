@@ -9,7 +9,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -38,6 +37,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -60,6 +61,7 @@ public class GalleryFragment extends Fragment implements OnGalleryClickListener 
     TextView txtNoRecording;
     private FirebaseAnalytics mFirebaseAnalytics;
     FragmentGalleryListBinding binding;
+    private final ExecutorService mGalleryExecutor = Executors.newSingleThreadExecutor();
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -108,8 +110,30 @@ public class GalleryFragment extends Fragment implements OnGalleryClickListener 
         recyclerView.setLayoutManager(layoutManager);
         adapter = new GalleryAdapter(videoList, this, imageWidth, activity.getContentResolver());
         recyclerView.setAdapter(adapter);
-        new GetGalleryData().execute("");
+        loadGalleryData();
         return view;
+    }
+
+    private void loadGalleryData() {
+        mGalleryExecutor.execute(() -> {
+            List<Video> vids = getVids();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                videoList.clear();
+                videoList.addAll(vids);
+                if (videoList.size() == 0) {
+                    txtNoRecording.setVisibility(View.VISIBLE);
+                }
+                loadingGalleryLayout.setVisibility(View.GONE);
+                adapter.notifyDataSetChanged();
+            });
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mGalleryExecutor.shutdownNow();
     }
 
     private void playVid(Video video) {
@@ -240,34 +264,5 @@ public class GalleryFragment extends Fragment implements OnGalleryClickListener 
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, eventId);
         bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, data);
         mFirebaseAnalytics.logEvent(eventId, bundle);
-    }
-
-    private class  GetGalleryData extends AsyncTask<String, Void, String> {
-        List<Video> vids;
-
-        @Override
-        protected String doInBackground(String... params) {
-            vids = getVids();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            videoList.clear();
-            videoList.addAll(vids);
-            if(videoList.size() == 0 ){
-                txtNoRecording.setVisibility(View.VISIBLE);
-            }
-            loadingGalleryLayout.setVisibility(View.GONE);
-            adapter.notifyDataSetChanged();
-        }
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-        }
     }
 }

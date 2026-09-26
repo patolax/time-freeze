@@ -12,7 +12,10 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
+import android.view.Choreographer;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -510,6 +513,22 @@ public class RecordableSurfaceView extends SurfaceView {
 
         private AtomicBoolean mLoop = new AtomicBoolean(false);
 
+        private final Object mFrameLock = new Object();
+        private volatile boolean mFramePending = false;
+        // re-posts itself each vsync so the GL thread wakes at display refresh rate
+        private final Choreographer.FrameCallback mFrameCallback = new Choreographer.FrameCallback() {
+            @Override
+            public void doFrame(long frameTimeNanos) {
+                synchronized (mFrameLock) {
+                    mFramePending = true;
+                    mFrameLock.notifyAll();
+                }
+                if (mLoop.get()) {
+                    Choreographer.getInstance().postFrameCallback(this);
+                }
+            }
+        };
+
         EGLConfig chooseEglConfig(EGLDisplay eglDisplay) {
             int[] configsCount = new int[]{0};
             EGLConfig[] configs = new EGLConfig[1];
@@ -564,6 +583,8 @@ public class RecordableSurfaceView extends SurfaceView {
             }
 
             mLoop.set(true);
+            new Handler(Looper.getMainLooper()).post(() ->
+                    Choreographer.getInstance().postFrameCallback(mFrameCallback));
 
             while (mLoop.get()) {
 
@@ -632,9 +653,19 @@ public class RecordableSurfaceView extends SurfaceView {
                     }
                 }
 
-                try {
-                    Thread.sleep((long) (1f / 60f * 1000f));
-                } catch (InterruptedException intex) {
+                boolean interrupted = false;
+                synchronized (mFrameLock) {
+                    while (!mFramePending && mLoop.get()) {
+                        try {
+                            mFrameLock.wait(50);
+                        } catch (InterruptedException intex) {
+                            interrupted = true;
+                            break;
+                        }
+                    }
+                    mFramePending = false;
+                }
+                if (interrupted) {
                     if (mRendererCallbacksWeakReference != null
                             && mRendererCallbacksWeakReference.get() != null) {
                         mRendererCallbacksWeakReference.get().onSurfaceDestroyed();
@@ -687,6 +718,7 @@ public class RecordableSurfaceView extends SurfaceView {
         @Override
         public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
             mLoop.set(false);
+            Choreographer.getInstance().removeFrameCallback(mFrameCallback);
             this.interrupt();
             getHolder().removeCallback(ARRenderThread.this);
         }

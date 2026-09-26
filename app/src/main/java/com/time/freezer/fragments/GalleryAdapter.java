@@ -6,9 +6,10 @@ import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.CancellationSignal;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -23,12 +24,17 @@ import com.time.freezer.R;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Video}.
  * TODO: Replace the implementation with code for your data type.
  */
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
+
+    private static final ExecutorService THUMBNAIL_EXECUTOR = Executors.newFixedThreadPool(4);
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
     private final List<Video> mValues;
     OnGalleryClickListener listener;
@@ -57,7 +63,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         holder.mContentView.getLayoutParams().width = imageWidth;
         holder.mContentView.getLayoutParams().height = (int) (imageWidth * (16 * 1.0f / 9));
         if (holder.mItem.getBitmap() == null) {
-            new BitmapWorkerTask(holder.mContentView, holder.imgGalleryShare).execute(holder.mItem);
+            loadThumbnail(holder.mItem, holder.mContentView, holder.imgGalleryShare);
             holder.imgGalleryShare.setVisibility(View.INVISIBLE);
         }
         holder.mContentView.setOnClickListener(new View.OnClickListener() {
@@ -104,54 +110,41 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         }
     }
 
-    class BitmapWorkerTask extends AsyncTask<Video, Void, Bitmap> {
-        private final WeakReference<ImageView> imageViewReference;
-        private final WeakReference<FloatingActionButton> fabReference;
-        private Video video;
-
-        public BitmapWorkerTask(ImageView imageView, FloatingActionButton fab) {
-            imageViewReference = new WeakReference<ImageView>(imageView);
-            fabReference = new WeakReference<FloatingActionButton>(fab);
-        }
-
-        // Decode image in background.
-        @Override
-        protected Bitmap doInBackground(Video... params) {
-            video = params[0];
+    // Loads a video thumbnail off the main thread, then applies it to the view if it's
+    // still bound to the same item (guarded via WeakReference, same as the old AsyncTask did).
+    private void loadThumbnail(Video video, ImageView imageView, FloatingActionButton fab) {
+        WeakReference<ImageView> imageViewReference = new WeakReference<>(imageView);
+        WeakReference<FloatingActionButton> fabReference = new WeakReference<>(fab);
+        THUMBNAIL_EXECUTOR.execute(() -> {
             Bitmap bitmap = loadVideoThumbnail(video.getUri(), video.getRealPath(), resolver);
             video.setBitmap(bitmap);
-            return bitmap;
-        }
-
-        public Bitmap loadVideoThumbnail(Uri videoFilePath, String picturePath, ContentResolver cr) {
-            Bitmap result = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Size mSize = new Size(128, 128);
-                CancellationSignal ca = new CancellationSignal();
-                try {
-                    result = cr.loadThumbnail(videoFilePath, mSize, ca);
-                } catch (IOException e) {
-                    e.printStackTrace();
+            if (bitmap == null) return;
+            MAIN_HANDLER.post(() -> {
+                ImageView iv = imageViewReference.get();
+                if (iv != null) {
+                    iv.setImageBitmap(bitmap);
                 }
-            } else {
-                result = ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND);
-            }
-            return result;
-        }
-
-        // Once complete, see if ImageView is still around and set bitmap.
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (imageViewReference != null && bitmap != null) {
-                final ImageView imageView = imageViewReference.get();
-                if (imageView != null) {
-                    imageView.setImageBitmap(bitmap);
-                }
-                final FloatingActionButton fabR = fabReference.get();
+                FloatingActionButton fabR = fabReference.get();
                 if (fabR != null) {
                     fabR.setVisibility(View.VISIBLE);
                 }
+            });
+        });
+    }
+
+    private Bitmap loadVideoThumbnail(Uri videoFilePath, String picturePath, ContentResolver cr) {
+        Bitmap result = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Size mSize = new Size(128, 128);
+            CancellationSignal ca = new CancellationSignal();
+            try {
+                result = cr.loadThumbnail(videoFilePath, mSize, ca);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        } else {
+            result = ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND);
         }
+        return result;
     }
 }

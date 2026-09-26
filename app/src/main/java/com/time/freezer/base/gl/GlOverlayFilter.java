@@ -11,7 +11,6 @@ import android.graphics.Path;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -38,6 +37,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -67,6 +68,7 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
     Slicer slicer;
     boolean imageSaved = false;
     boolean saveImageSetting = false;
+    private final ExecutorService mSaveExecutor = Executors.newSingleThreadExecutor();
 
     public GlOverlayFilter(Context context) {
         super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
@@ -87,7 +89,6 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
                     "void main() {\n" +
                     "   lowp vec4 textureColor = texture2D(sTexture, vTextureCoord);\n" +
                     "   lowp vec4 textureColor2 = texture2D(oTexture, vTextureCoord);\n" +
-                    "   \n" +
                     "   gl_FragColor = mix(textureColor, textureColor2, textureColor2.a);\n" +
                     "}\n";
 
@@ -190,6 +191,10 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
         long start = System.currentTimeMillis();
         lock.lock();
         try {
+            if (slicer == null) {
+                Log.e("myApp", "overlay: slicer is NULL, cannot scan");
+                return;
+            }
             if (!slicer.isScanDone()) {
                 slicer.drawSlice(inputBitmap, finalBitmap, filter);
                 result = finalBitmap;
@@ -257,6 +262,7 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
         releaseBitmap(bitmap);
         releaseBitmap(finalBitmap);
         releaseBitmap(result);
+        mSaveExecutor.shutdown();
     }
 
     public static void releaseBitmap(Bitmap bitmap) {
@@ -274,7 +280,7 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
             }
             imageSaved = true;
             Bitmap bmp2 = bitmap.copy(bitmap.getConfig(), true);
-            new SaveImageTask().execute(bmp2);
+            mSaveExecutor.execute(() -> saveImageInBackground(bmp2));
         } catch (Exception e) {
         }
     }
@@ -284,45 +290,40 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
         return false;
     }
 
-    private class SaveImageTask extends AsyncTask<Bitmap, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Bitmap... data) {
-            try {
-                if (data.length > 0 && data[0] == null) return null;
-                ContentResolver resolver = mContext.getContentResolver();
-                String fileName = "TF_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()) + ".jpg";
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
-                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + mContext.getString(R.string.app_name));
-                } else {
-                    File directory = Environment.getExternalStoragePublicDirectory(
-                            Environment.DIRECTORY_PICTURES);
-                    if (!directory.exists()) {
-                        directory.mkdirs();
-                    }
-                    File file = new File(directory, fileName);
-                    values.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
+    private void saveImageInBackground(Bitmap bitmap) {
+        try {
+            if (bitmap == null) return;
+            ContentResolver resolver = mContext.getContentResolver();
+            String fileName = "TF_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()) + ".jpg";
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + mContext.getString(R.string.app_name));
+            } else {
+                File directory = Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES);
+                if (!directory.exists()) {
+                    directory.mkdirs();
                 }
-
-                Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                if (uri != null) {
-                    OutputStream output = resolver.openOutputStream(uri);
-                    data[0].compress(Bitmap.CompressFormat.JPEG, 100, output);
-                    output.flush();
-                    output.close();
-                }
-
-            } catch (IOException e) {
-                Log.d("myApp", "Image saved!" + e.getMessage());
-                e.printStackTrace();
-            } catch (Exception e) {
-                Log.d("myApp", "Image saved!" + e.getMessage());
-                e.printStackTrace();
+                File file = new File(directory, fileName);
+                values.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
             }
-            return null;
+
+            Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (uri != null) {
+                OutputStream output = resolver.openOutputStream(uri);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+                output.flush();
+                output.close();
+            }
+
+        } catch (IOException e) {
+            Log.d("myApp", "Image saved!" + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            Log.d("myApp", "Image saved!" + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

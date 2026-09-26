@@ -16,8 +16,9 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -62,6 +63,8 @@ import com.time.freezer.filters.FilterManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -104,6 +107,8 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
     BillingClientLifecycle billingClientLifecycle;
     Purchase updrade;
     boolean premiumUser;
+    private final ExecutorService mFilterLoadExecutor = Executors.newSingleThreadExecutor();
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     GridLayoutManager layoutManager;
     int PickImageRequestCode = 1000;
     private FirebaseAnalytics mFirebaseAnalytics;
@@ -161,7 +166,7 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
         layoutManager = new GridLayoutManager(getActivity(), columns);
         recyclerView.setLayoutManager(layoutManager);
 
-        new LoadFiltersAsyncTask().execute();
+        loadFilters();
 
         toggleDirection.setOnToggleSelectedListener((toggle, selected) -> {
             int id = toggle.getId();
@@ -313,29 +318,23 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
         }
     }
 
-    private class LoadFiltersAsyncTask extends AsyncTask<String, String, List<FilterItem>> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mFilterLoadExecutor.shutdownNow();
+    }
 
-        }
-
-        @Override
-        protected List<FilterItem> doInBackground(String... strings) {
+    private void loadFilters() {
+        mFilterLoadExecutor.execute(() -> {
             List<FilterItem> list = new ArrayList<>();
             try {
                 list = new FilterManager().load(activity);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return list;
-        }
-
-        @Override
-        protected void onPostExecute(List<FilterItem> list) {
-            super.onPostExecute(list);
-            setFilters(list);
-        }
+            List<FilterItem> finalList = list;
+            mMainHandler.post(() -> setFilters(finalList));
+        });
     }
 
     private void setFilters(List<FilterItem> list) {
