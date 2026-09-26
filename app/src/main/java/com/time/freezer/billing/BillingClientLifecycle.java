@@ -6,11 +6,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.OnLifecycleEvent;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
@@ -25,10 +22,8 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
-import com.google.firebase.crashlytics.internal.model.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -180,11 +175,8 @@ public class BillingClientLifecycle implements DefaultLifecycleObserver, Purchas
         );
     }
 
-    public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
-        if (billingResult == null) {
-            Log.wtf(TAG, "onPurchasesUpdated: null BillingResult");
-            return;
-        }
+    @Override
+    public void onPurchasesUpdated(@NonNull BillingResult billingResult, List<Purchase> purchases) {
         int responseCode = billingResult.getResponseCode();
         String debugMessage = billingResult.getDebugMessage();
         Log.d(TAG, "onPurchasesUpdated: " + responseCode + " " + debugMessage);

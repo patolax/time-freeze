@@ -107,7 +107,7 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
     BillingClientLifecycle billingClientLifecycle;
     Purchase updrade;
     boolean premiumUser;
-    private final ExecutorService mFilterLoadExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mFilterLoadExecutor;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     GridLayoutManager layoutManager;
     int PickImageRequestCode = 1000;
@@ -125,6 +125,7 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
                              Bundle savedInstanceState) {
         binding = FragmentLandingBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
+        mFilterLoadExecutor = Executors.newSingleThreadExecutor();
         toggleFilter = binding.toggleFilter;
         btnStart = binding.btnStart;
         toggleSaveImage = binding.toggleSaveImage;

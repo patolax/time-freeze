@@ -61,7 +61,7 @@ public class GalleryFragment extends Fragment implements OnGalleryClickListener 
     TextView txtNoRecording;
     private FirebaseAnalytics mFirebaseAnalytics;
     FragmentGalleryListBinding binding;
-    private final ExecutorService mGalleryExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mGalleryExecutor;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -95,6 +95,7 @@ public class GalleryFragment extends Fragment implements OnGalleryClickListener 
                              Bundle savedInstanceState) {
         binding = FragmentGalleryListBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
+        mGalleryExecutor = Executors.newSingleThreadExecutor();
         rvGallery = binding.rvGallery;
         loadingGalleryLayout =binding.loadingGalleryLayout;
         txtNoRecording = binding.txtNoRecording;
