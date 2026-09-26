@@ -45,6 +45,7 @@ import com.android.billingclient.api.Purchase;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.time.freezer.BuildConfig;
 import com.time.freezer.MainActivity;
 import com.time.freezer.R;
 import com.time.freezer.base.utils.AppRatingDialog;
@@ -426,7 +427,7 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
     public void onClickRecord(boolean reward) {
         if (checkPermissons()) return;
         if (listener != null) {
-             if (settings.getFilter().isPremium() && !premiumUser && !reward) {
+             if (settings.getFilter().isPremium() && !premiumUser && !reward && !BuildConfig.DEBUG) {
                 showPermissonsAlert(settings.getFilter().getTitle());
                 return;
             }
