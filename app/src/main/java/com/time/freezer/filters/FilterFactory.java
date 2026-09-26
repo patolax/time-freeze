@@ -40,61 +40,95 @@ public class FilterFactory {
 }
 
 // saturation like in photo edit
-class SaturationModifyFilter extends RenderScriptImageFilter {
+class SaturationModifyFilter extends IImageFilter {
     private final float mSaturationFactor;
-    ScriptC_SaturationModifyFilter script;
 
     public SaturationModifyFilter(Context context) {
         super(context);
         mSaturationFactor = 2f;
-        script = new ScriptC_SaturationModifyFilter(mRS);
     }
 
     public SaturationModifyFilter(Context context, float saturationFactor) {
         super(context);
-        script = new ScriptC_SaturationModifyFilter(mRS);
         mSaturationFactor = saturationFactor;
     }
 
     @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        float saturation = mSaturationFactor + 1.0f;
+        float negosaturation = 1.0f - saturation;
+        float nego1 = negosaturation * 0.2126f;
+        float nego2 = nego1 + saturation;
+        float nego3 = negosaturation * 0.7152f;
+        float nego4 = nego3 + saturation;
+        float nego5 = negosaturation * 0.0722f;
+        float nego6 = nego5 + saturation;
+
+        for (int i = 0; i < pixels.length; i++) {
+            int p = pixels[i];
+            float r = ((p >> 16) & 0xFF) / 255f;
+            float g = ((p >> 8) & 0xFF) / 255f;
+            float b = (p & 0xFF) / 255f;
+
+            float outR = clamp01((r * nego2) + (g * nego3) + (b * nego5));
+            float outG = clamp01((r * nego1) + (g * nego4) + (b * nego5));
+            float outB = clamp01((r * nego1) + (g * nego3) + (b * nego6));
+
+            pixels[i] = 0xFF000000
+                    | (Math.round(outR * 255) << 16)
+                    | (Math.round(outG * 255) << 8)
+                    | Math.round(outB * 255);
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 
-    @Override
-    public void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gSaturationFactor(mSaturationFactor);
-        script.set_gScript(script);
-
-        script.invoke_filter();
-        mScript = script;
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
     }
 }
 
-// super slow
-class NoiseFilter extends RenderScriptImageFilter {
-    private ScriptC_NoiseFilter script;
+class NoiseFilter extends IImageFilter {
+    private static final float INTENSITY = 0.2f;
+    private final java.util.Random random = new java.util.Random();
 
     public NoiseFilter(Context context) {
         super(context);
-        script = new ScriptC_NoiseFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.invoke_filter();
-        mScript = script;
+        for (int i = 0; i < pixels.length; i++) {
+            int p = pixels[i];
+            float r = ((p >> 16) & 0xFF) / 255f + (random.nextFloat() * 2f - 1f) * INTENSITY;
+            float g = ((p >> 8) & 0xFF) / 255f + (random.nextFloat() * 2f - 1f) * INTENSITY;
+            float b = (p & 0xFF) / 255f + (random.nextFloat() * 2f - 1f) * INTENSITY;
+
+            pixels[i] = 0xFF000000
+                    | (Math.round(clamp01(r) * 255) << 16)
+                    | (Math.round(clamp01(g) * 255) << 8)
+                    | Math.round(clamp01(b) * 255);
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
     }
 };
 
@@ -149,160 +183,215 @@ class OldFilter extends IImageFilter {
     }
 };
 
-class InvertFilter extends RenderScriptImageFilter {
-
-    ScriptC_InvertFilter script;
+class InvertFilter extends IImageFilter {
 
     public InvertFilter(Context context) {
         super(context);
-        script = new ScriptC_InvertFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+        for (int i = 0; i < pixels.length; i++) {
+            int p = pixels[i];
+            int r = 255 - ((p >> 16) & 0xFF);
+            int g = 255 - ((p >> 8) & 0xFF);
+            int b = 255 - (p & 0xFF);
+            pixels[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+        }
 
-        script.invoke_filter();
-        mScript = script;
-    }
-
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 };
 
-class LightFilter extends RenderScriptImageFilter {
-
-    ScriptC_LightFilter script;
+class LightFilter extends IImageFilter {
+    private static final float LIGHT = 150.0f / 255.0f;
 
     public LightFilter(Context context) {
         super(context);
-        script = new ScriptC_LightFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+        float halfWidth = width / 2f;
+        float halfHeight = height / 2f;
+        float radius = Math.min(halfWidth, halfHeight);
 
-        script.invoke_filter();
-        mScript = script;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int i = y * width + x;
+                int p = pixels[i];
+                float dx = x - halfWidth;
+                float dy = y - halfHeight;
+                float length = (float) Math.sqrt(dx * dx + dy * dy);
+
+                if (length < radius) {
+                    float pixel = LIGHT * (1.0f - length / radius);
+                    float r = clamp01(((p >> 16) & 0xFF) / 255f + pixel);
+                    float g = clamp01(((p >> 8) & 0xFF) / 255f + pixel);
+                    float b = clamp01((p & 0xFF) / 255f + pixel);
+                    pixels[i] = 0xFF000000
+                            | (Math.round(r * 255) << 16)
+                            | (Math.round(g * 255) << 8)
+                            | Math.round(b * 255);
+                } else {
+                    pixels[i] = 0xFF000000 | (p & 0x00FFFFFF);
+                }
+            }
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
     }
 };
 
 // like pixalate
-class MosaicFilter extends RenderScriptImageFilter {
-
-    ScriptC_MosaicFilter script;
+class MosaicFilter extends IImageFilter {
+    private static final int MOSAIC_SIZE = 40;
 
     public MosaicFilter(Context context) {
         super(context);
-        script = new ScriptC_MosaicFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        int[] out = new int[pixels.length];
 
-        script.invoke_filter();
-        mScript = script;
-    }
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int i = y * width + x;
+                if (y % MOSAIC_SIZE == 0 && x % MOSAIC_SIZE == 0) {
+                    out[i] = 0xFF000000 | (pixels[i] & 0x00FFFFFF);
+                } else {
+                    int anchorX = MOSAIC_SIZE * (x / MOSAIC_SIZE);
+                    int anchorY = MOSAIC_SIZE * (y / MOSAIC_SIZE);
+                    int anchorPixel = pixels[anchorY * width + anchorX];
+                    out[i] = 0xFF000000 | (anchorPixel & 0x00FFFFFF);
+                }
+            }
+        }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        Bitmap outBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        outBitmap.setPixels(out, 0, width, 0, 0, width, height);
+        return outBitmap;
     }
 };
 
 /// ghost
-class TintFilter extends RenderScriptImageFilter {
-
-    ScriptC_TintFilter script;
+class TintFilter extends IImageFilter {
 
     public TintFilter(Context context) {
         super(context);
-        script = new ScriptC_TintFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.invoke_filter();
-        mScript = script;
-    }
+        for (int i = 0; i < pixels.length; i++) {
+            int p = pixels[i];
+            float negR = 1.0f - ((p >> 16) & 0xFF) / 255f;
+            float negG = 1.0f - ((p >> 8) & 0xFF) / 255f;
+            float negB = 1.0f - (p & 0xFF) / 255f;
+            float grey = negR * 0.2126f + negG * 0.7152f + negB * 0.0722f;
+            int v = Math.round(grey * 255);
+            pixels[i] = 0xFF000000 | (v << 16) | (v << 8) | v;
+        }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 };
 
 
-// super slow
-class OilPaintFilter extends RenderScriptImageFilter {
-
-    ScriptC_OilPaintFilter script;
+class OilPaintFilter extends IImageFilter {
+    private static final int MODEL = 30;
+    private final java.util.Random random = new java.util.Random();
 
     public OilPaintFilter(Context context) {
         super(context);
-        script = new ScriptC_OilPaintFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        int[] out = new int[pixels.length];
 
-        script.invoke_filter();
-        mScript = script;
-    }
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pos = (random.nextInt(9999) + 1) % MODEL;
+                int theX = (x + pos) < width ? (x + pos) : ((x - pos) >= 0 ? (x - pos) : x);
+                int theY = (y + pos) < height ? (y + pos) : ((y - pos) >= 0 ? (y - pos) : y);
+                int sample = pixels[theY * width + theX];
+                out[y * width + x] = 0xFF000000 | (sample & 0x00FFFFFF);
+            }
+        }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        Bitmap outBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        outBitmap.setPixels(out, 0, width, 0, 0, width, height);
+        return outBitmap;
     }
 };
 
 // looks like photo reel
-class ColorQuantizeFilter extends RenderScriptImageFilter {
-
-    ScriptC_ColorQuantizeFilter script;
+class ColorQuantizeFilter extends IImageFilter {
+    private static final float LEVELS = 5.0f;
 
     public ColorQuantizeFilter(Context context) {
         super(context);
-        script = new ScriptC_ColorQuantizeFilter(mRS);
     }
 
     @Override
-    protected final void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.invoke_filter();
-        mScript = script;
+        for (int i = 0; i < pixels.length; i++) {
+            int p = pixels[i];
+            int r = quantize((p >> 16) & 0xFF);
+            int g = quantize((p >> 8) & 0xFF);
+            int b = quantize(p & 0xFF);
+            pixels[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    private static int quantize(int channel) {
+        float f = channel / 255f;
+        int level = (int) (f * LEVELS);
+        return Math.round((level / LEVELS) * 255f);
     }
 };
 
@@ -347,42 +436,62 @@ class ColorToneFilter extends RenderScriptImageFilter {
 };
 
 
-class ThreeDGridFilter extends RenderScriptImageFilter {
+class ThreeDGridFilter extends IImageFilter {
     private final int mSize;
     private final float mDepth;
-    ScriptC_ThreeDGridFilter script;
 
     public ThreeDGridFilter(Context context) {
         super(context);
-        script = new ScriptC_ThreeDGridFilter(mRS);
         mSize = 16;
         mDepth = 100.0f / 255.0f;
     }
 
     public ThreeDGridFilter(Context context, int size, float depth) {
         super(context);
-        script = new ScriptC_ThreeDGridFilter(mRS);
-        mSize = size;
+        mSize = Math.max(size, 1);
         mDepth = depth;
     }
 
     @Override
-    protected final void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
-        script.set_gSize(mSize);
-        script.set_gDepth(mDepth);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.invoke_filter();
-        mScript = script;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int i = y * width + x;
+                int p = pixels[i];
+                float d = 0;
+                if (Math.floorMod(y - 1, mSize) == 0 && x % mSize > 0 && (x + 1) % mSize > 0) {
+                    d = -mDepth; // top
+                } else if ((y + 2) % mSize == 0 && x % mSize > 0 && (x + 1) % mSize > 0) {
+                    d = mDepth; // bottom
+                } else if (Math.floorMod(x - 1, mSize) == 0 && y % mSize > 0 && (y + 1) % mSize > 0) {
+                    d = mDepth; // left
+                } else if ((x + 2) % mSize == 0 && y % mSize > 0 && (y + 1) % mSize > 0) {
+                    d = -mDepth; // right
+                }
+
+                float r = clamp01(((p >> 16) & 0xFF) / 255f + d);
+                float g = clamp01(((p >> 8) & 0xFF) / 255f + d);
+                float b = clamp01((p & 0xFF) / 255f + d);
+                pixels[i] = 0xFF000000
+                        | (Math.round(r * 255) << 16)
+                        | (Math.round(g * 255) << 8)
+                        | Math.round(b * 255);
+            }
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
     }
-
 };
 
 class BlurFilter extends IImageFilter {
@@ -398,36 +507,39 @@ class BlurFilter extends IImageFilter {
 };
 
 // thresholding = black and white
-class ThresholdFilter extends RenderScriptImageFilter {
+class ThresholdFilter extends IImageFilter {
     private final float mThreshold;
-    ScriptC_ThresholdFilter script;
 
     public ThresholdFilter(Context context) {
         super(context);
-        script = new ScriptC_ThresholdFilter(mRS);
         mThreshold = 0.5f;
     }
 
     public ThresholdFilter(Context context, float threshold) {
         super(context);
-        script = new ScriptC_ThresholdFilter(mRS);
         mThreshold = threshold;
     }
 
     @Override
-    protected void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
-        script.set_gThreshold(mThreshold);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.invoke_filter();
-        mScript = script;
-    }
+        for (int i = 0; i < pixels.length; i++) {
+            int p = pixels[i];
+            float r = ((p >> 16) & 0xFF) / 255f;
+            float g = ((p >> 8) & 0xFF) / 255f;
+            float b = (p & 0xFF) / 255f;
+            float grey = r * 0.2126f + g * 0.7152f + b * 0.0722f;
+            int v = grey > mThreshold ? 255 : 0;
+            pixels[i] = 0xFF000000 | (v << 16) | (v << 8) | v;
+        }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 };
 
@@ -458,28 +570,47 @@ class RadialDistortionFilter extends RenderScriptImageFilter {
     }
 };
 
-class BigBrotherFilter extends RenderScriptImageFilter {
-
-    ScriptC_BigBrotherFilter script;
+class BigBrotherFilter extends IImageFilter {
+    private static final int DOT_AREA = 10;
+    private static final int[] DITHER = {
+            167, 200, 230, 216, 181, 94, 72, 193, 242, 232,
+            36, 52, 222, 167, 200, 181, 126, 210, 94, 72,
+            232, 153, 111, 36, 52, 167, 200, 230, 216, 181,
+            94, 72, 193, 242, 232, 36, 52, 222, 167, 200,
+            181, 126, 210, 94, 72, 232, 153, 111, 36, 52,
+            167, 200, 230, 216, 181, 94, 72, 193, 242, 232,
+            36, 52, 222, 167, 200, 181, 126, 210, 94, 72,
+            232, 153, 111, 36, 52, 167, 200, 230, 216, 181,
+            94, 72, 193, 242, 232, 36, 52, 222, 167, 200,
+            181, 126, 210, 94, 72, 232, 153, 111, 36, 52
+    };
 
     public BigBrotherFilter(Context context) {
         super(context);
-        script = new ScriptC_BigBrotherFilter(mRS);
     }
 
     @Override
-    protected void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        script.invoke_filter();
-        mScript = script;
-    }
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int i = y * width + x;
+                int p = pixels[i];
+                float b = (p & 0xFF) / 255f;
+                int index = (y % DOT_AREA) * DOT_AREA + (x % DOT_AREA);
+                int grayIntensity = (int) ((1.0f - b) * 255);
+                int v = grayIntensity > DITHER[index] ? 0 : 255;
+                pixels[i] = 0xFF000000 | (v << 16) | (v << 8) | v;
+            }
+        }
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 };
 
@@ -555,35 +686,58 @@ class ParamEdgeDetectFilter extends RenderScriptImageFilter {
 };
 
 // like a poster
-class PosterizeFilter extends RenderScriptImageFilter {
+class PosterizeFilter extends IImageFilter {
     private final int mLevel;
-    ScriptC_PosterizeFilter script;
+    private final int[] mLut = new int[256];
 
     public PosterizeFilter(Context context) {
         super(context);
-        script = new ScriptC_PosterizeFilter(mRS);
         mLevel = 10;
+        buildLut();
     }
 
-    public PosterizeFilter(Context context, int _level) {
+    public PosterizeFilter(Context context, int level) {
         super(context);
-        script = new ScriptC_PosterizeFilter(mRS);
-        mLevel = _level;
+        mLevel = level;
+        buildLut();
+    }
+
+    private void buildLut() {
+        int level = Math.max(mLevel, 2);
+        float d = 255.0f / (level - 1.0f);
+        for (int i = 0; i <= 255; i++) {
+            int n = (int) (i / d + 0.5f);
+            int v = Math.round(d * n);
+            mLut[i] = Math.max(0, Math.min(255, v));
+        }
     }
 
     @Override
-    protected void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gLevel(mLevel);
-        script.set_gScript(script);
-        script.invoke_filter();
-        mScript = script;
-    }
+    public Bitmap process(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-    @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+        // Matches the original kernel's boundary check: the last row/column pass through unfiltered.
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int i = y * width + x;
+                int p = pixels[i];
+                if (x < width - 1 && y < height - 1) {
+                    int r = mLut[(p >> 16) & 0xFF];
+                    int g = mLut[(p >> 8) & 0xFF];
+                    int b = mLut[p & 0xFF];
+                    pixels[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+                } else {
+                    pixels[i] = 0xFF000000 | (p & 0x00FFFFFF);
+                }
+            }
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 };
 
