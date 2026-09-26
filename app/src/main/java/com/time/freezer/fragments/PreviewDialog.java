@@ -49,17 +49,15 @@ public class PreviewDialog  extends DialogFragment {
         txtFilterPreviewTitle.setText(title + " Filter Preview");
         getLifecycle().addObserver(youTubePlayerView);
 
-        youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
+        youTubePlayerView.initialize(new AbstractYouTubePlayerListener() {
             @Override
             public void onReady(@NonNull YouTubePlayer youTubePlayer) {
                 String videoId = url;
-                //youTubePlayer.loadVideo(videoId, 0f);
-                Log.d("myApp", videoId);
                 YouTubePlayerUtils.loadOrCueVideo(
-                        youTubePlayer, getLifecycle(), videoId,0f
+                        youTubePlayer, getLifecycle(), videoId, 0f
                 );
             }
-        });
+        }, true);
 
         builder.setView(view);
         Dialog dialog = builder.create();

@@ -185,6 +185,16 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
         }
     }
 
+    // CameraX delivers analysis frames much faster than the original Camera1 pipeline did.
+    // The scan reveal composites a new stamp onto finalBitmap on every call, and the slicer's
+    // scan-speed tuning (increment per stamp) assumes stamps arrive at a moderate, steady rate -
+    // stamping every single incoming frame at the new, much higher throughput just accumulates
+    // many more overlapping, imperfectly-blended stamps per unit of scan distance, which shows up
+    // as visible seam/hairline artifacts in the revealed region. Throttle stamping to a steady
+    // ~30fps regardless of how fast frames actually arrive.
+    private static final long MIN_STAMP_INTERVAL_MS = 33;
+    private long lastStampTimeMs = 0;
+
     public void overlay(Bitmap inputBitmap) {
         if (!isScrollring) return;
         if (inputBitmap == null) return;
@@ -196,6 +206,13 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
                 return;
             }
             if (!slicer.isScanDone()) {
+                if (start - lastStampTimeMs < MIN_STAMP_INTERVAL_MS) {
+                    if (!filter.isBackgorundFilter()) {
+                        inputBitmap.recycle();
+                    }
+                    return;
+                }
+                lastStampTimeMs = start;
                 slicer.drawSlice(inputBitmap, finalBitmap, filter);
                 result = finalBitmap;
                 if (!filter.isBackgorundFilter()) {

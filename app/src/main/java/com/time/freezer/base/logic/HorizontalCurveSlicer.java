@@ -34,7 +34,6 @@ public class HorizontalCurveSlicer extends Slicer {
 
         porterDuffPaint = new Paint();
         porterDuffPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));
-        increment = 10;
         createPath(height * 1.0f / 3);
     }
 

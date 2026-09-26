@@ -36,8 +36,7 @@ public class VerticalZigZagSlicer extends Slicer {
 
         porterDuffPaint = new Paint();
         porterDuffPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));
-        increment = 10;
-        createPath(30);
+        createPath(width / 40f);
     }
 
     @Override

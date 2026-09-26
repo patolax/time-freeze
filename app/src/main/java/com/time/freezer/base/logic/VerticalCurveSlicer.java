@@ -36,7 +36,6 @@ public class VerticalCurveSlicer extends Slicer {
 
         porterDuffPaint = new Paint();
         porterDuffPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));
-        increment = 10;
         createPath(width * 1.0f / 2);
     }
 

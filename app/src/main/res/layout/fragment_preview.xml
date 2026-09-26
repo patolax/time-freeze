@@ -24,8 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/small_margin"
-        app:videoId="n9scwJwg7fM"
-        app:autoPlay="true"
+        app:enableAutomaticInitialization="false"
         />
 
 </LinearLayout>
