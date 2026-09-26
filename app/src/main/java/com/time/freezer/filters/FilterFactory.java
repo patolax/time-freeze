@@ -3,13 +3,10 @@ package com.time.freezer.filters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.renderscript.Element;
 import android.renderscript.Float3;
-import android.renderscript.Matrix4f;
-import android.renderscript.ScriptIntrinsicBlur;
-import android.renderscript.ScriptIntrinsicColorMatrix;
 import android.util.Log;
 
+import com.google.android.renderscript.Toolkit;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.time.freezer.fragments.Constants;
 import com.time.freezer.fragments.ScanSettings;
@@ -101,66 +98,54 @@ class NoiseFilter extends RenderScriptImageFilter {
     }
 };
 
-class BlackWhiteFilter extends RenderScriptImageFilter {
-    ScriptIntrinsicColorMatrix script;
+class BlackWhiteFilter extends IImageFilter {
 
     public BlackWhiteFilter(Context context) {
         super(context);
-        script =
-                ScriptIntrinsicColorMatrix.create(mRS,
-                        Element.U8_4(mRS));
     }
 
     @Override
-    protected final void _process() {
-        script.setGreyscale();
-        script.forEach(mInAllocation, mOutAllocation);
+    public Bitmap process(Bitmap bitmap) {
+        return Toolkit.INSTANCE.colorMatrix(bitmap, Toolkit.INSTANCE.getGreyScaleColorMatrix());
     }
 };
 
-class SepiaFilter extends RenderScriptImageFilter {
-    ScriptIntrinsicColorMatrix script;
-    final Matrix4f mSepia = new Matrix4f(new float[]{
-            0.189f, 0.769f, 0.393f, 0f,
-            0.168f, 0.686f, 0.349f, 0f,
-            0.131f, 0.534f, 0.272f, 0f,
+// RenderScript's Matrix4f is column-major; Toolkit.colorMatrix expects row-major, so this is the
+// transpose of the original Matrix4f array (verified against Toolkit.greyScaleColorMatrix, whose
+// documented layout only produces true greyscale under the transposed convention).
+class SepiaFilter extends IImageFilter {
+    private static final float[] MATRIX = {
+            0.189f, 0.168f, 0.131f, 0f,
+            0.769f, 0.686f, 0.534f, 0f,
+            0.393f, 0.349f, 0.272f, 0f,
             0.000f, 0.000f, 0.000f, 1f
-    });
+    };
 
     public SepiaFilter(Context context) {
         super(context);
-        script =
-                ScriptIntrinsicColorMatrix.create(mRS,
-                        Element.U8_4(mRS));
     }
 
     @Override
-    protected final void _process() {
-        script.setColorMatrix(mSepia);
-        script.forEach(mInAllocation, mOutAllocation);
+    public Bitmap process(Bitmap bitmap) {
+        return Toolkit.INSTANCE.colorMatrix(bitmap, MATRIX);
     }
 };
 
-class OldFilter extends RenderScriptImageFilter {
-    ScriptIntrinsicColorMatrix script;
-    final Matrix4f mSepia = new Matrix4f(new float[]{
-            0.393f, 0.349f, 0.272f, 0f,
-            0.769f, 0.686f, 0.534f, 0f,
-            0.189f, 0.168f, 0.131f, 0f,
+class OldFilter extends IImageFilter {
+    private static final float[] MATRIX = {
+            0.393f, 0.769f, 0.189f, 0f,
+            0.349f, 0.686f, 0.168f, 0f,
+            0.272f, 0.534f, 0.131f, 0f,
             0.000f, 0.000f, 0.000f, 1f
-    });
+    };
 
     public OldFilter(Context context) {
         super(context);
-        script =
-                ScriptIntrinsicColorMatrix.create(mRS,
-                        Element.U8_4(mRS));
     }
 
     @Override
-    protected final void _process() {
-        script.setColorMatrix(mSepia);
-        script.forEach(mInAllocation, mOutAllocation);
+    public Bitmap process(Bitmap bitmap) {
+        return Toolkit.INSTANCE.colorMatrix(bitmap, MATRIX);
     }
 };
 
@@ -400,24 +385,15 @@ class ThreeDGridFilter extends RenderScriptImageFilter {
 
 };
 
-class BlurFilter extends RenderScriptImageFilter {
-
-    ScriptIntrinsicBlur script;
+class BlurFilter extends IImageFilter {
 
     public BlurFilter(Context context) {
         super(context);
-        script = ScriptIntrinsicBlur.create(mRS, Element.U8_4(mRS));
     }
 
     @Override
-    protected void _process() {
-        script.setRadius(25f);
-        script.setInput(mInAllocation);
-    }
-
-    @Override
-    protected void _postProcess() {
-        script.forEach(mOutAllocation);
+    public Bitmap process(Bitmap bitmap) {
+        return Toolkit.INSTANCE.blur(bitmap, 25);
     }
 };
 

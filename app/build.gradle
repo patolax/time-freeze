@@ -71,6 +71,7 @@ dependencies {
     implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:13.0.0'
     implementation 'com.google.android.gms:play-services-ads:25.5.0'
     implementation 'com.google.guava:guava:33.4.0-android'
+    implementation project(':renderscript-toolkit')
     implementation platform('com.google.firebase:firebase-bom:34.19.0')
 
     // Declare the dependencies for the Crashlytics and Analytics libraries
