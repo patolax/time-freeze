@@ -43,7 +43,7 @@ public class FilterFactory {
 }
 
 // saturation like in photo edit
-class SaturationModifyFilter extends IImageFilter {
+class SaturationModifyFilter extends RenderScriptImageFilter {
     private final float mSaturationFactor;
     ScriptC_SaturationModifyFilter script;
 
@@ -77,7 +77,7 @@ class SaturationModifyFilter extends IImageFilter {
 }
 
 // super slow
-class NoiseFilter extends IImageFilter {
+class NoiseFilter extends RenderScriptImageFilter {
     private ScriptC_NoiseFilter script;
 
     public NoiseFilter(Context context) {
@@ -101,7 +101,7 @@ class NoiseFilter extends IImageFilter {
     }
 };
 
-class BlackWhiteFilter extends IImageFilter {
+class BlackWhiteFilter extends RenderScriptImageFilter {
     ScriptIntrinsicColorMatrix script;
 
     public BlackWhiteFilter(Context context) {
@@ -118,7 +118,7 @@ class BlackWhiteFilter extends IImageFilter {
     }
 };
 
-class SepiaFilter extends IImageFilter {
+class SepiaFilter extends RenderScriptImageFilter {
     ScriptIntrinsicColorMatrix script;
     final Matrix4f mSepia = new Matrix4f(new float[]{
             0.189f, 0.769f, 0.393f, 0f,
@@ -141,7 +141,7 @@ class SepiaFilter extends IImageFilter {
     }
 };
 
-class OldFilter extends IImageFilter {
+class OldFilter extends RenderScriptImageFilter {
     ScriptIntrinsicColorMatrix script;
     final Matrix4f mSepia = new Matrix4f(new float[]{
             0.393f, 0.349f, 0.272f, 0f,
@@ -164,7 +164,7 @@ class OldFilter extends IImageFilter {
     }
 };
 
-class InvertFilter extends IImageFilter {
+class InvertFilter extends RenderScriptImageFilter {
 
     ScriptC_InvertFilter script;
 
@@ -190,7 +190,7 @@ class InvertFilter extends IImageFilter {
     }
 };
 
-class LightFilter extends IImageFilter {
+class LightFilter extends RenderScriptImageFilter {
 
     ScriptC_LightFilter script;
 
@@ -217,7 +217,7 @@ class LightFilter extends IImageFilter {
 };
 
 // like pixalate
-class MosaicFilter extends IImageFilter {
+class MosaicFilter extends RenderScriptImageFilter {
 
     ScriptC_MosaicFilter script;
 
@@ -243,7 +243,7 @@ class MosaicFilter extends IImageFilter {
 };
 
 /// ghost
-class TintFilter extends IImageFilter {
+class TintFilter extends RenderScriptImageFilter {
 
     ScriptC_TintFilter script;
 
@@ -270,7 +270,7 @@ class TintFilter extends IImageFilter {
 
 
 // super slow
-class OilPaintFilter extends IImageFilter {
+class OilPaintFilter extends RenderScriptImageFilter {
 
     ScriptC_OilPaintFilter script;
 
@@ -296,7 +296,7 @@ class OilPaintFilter extends IImageFilter {
 };
 
 // looks like photo reel
-class ColorQuantizeFilter extends IImageFilter {
+class ColorQuantizeFilter extends RenderScriptImageFilter {
 
     ScriptC_ColorQuantizeFilter script;
 
@@ -321,7 +321,7 @@ class ColorQuantizeFilter extends IImageFilter {
     }
 };
 
-class ColorToneFilter extends IImageFilter {
+class ColorToneFilter extends RenderScriptImageFilter {
     private final Float3 mRGB;
 
     private final float mSaturation;
@@ -362,7 +362,7 @@ class ColorToneFilter extends IImageFilter {
 };
 
 
-class ThreeDGridFilter extends IImageFilter {
+class ThreeDGridFilter extends RenderScriptImageFilter {
     private final int mSize;
     private final float mDepth;
     ScriptC_ThreeDGridFilter script;
@@ -400,7 +400,7 @@ class ThreeDGridFilter extends IImageFilter {
 
 };
 
-class BlurFilter extends IImageFilter {
+class BlurFilter extends RenderScriptImageFilter {
 
     ScriptIntrinsicBlur script;
 
@@ -422,7 +422,7 @@ class BlurFilter extends IImageFilter {
 };
 
 // thresholding = black and white
-class ThresholdFilter extends IImageFilter {
+class ThresholdFilter extends RenderScriptImageFilter {
     private final float mThreshold;
     ScriptC_ThresholdFilter script;
 
@@ -456,7 +456,7 @@ class ThresholdFilter extends IImageFilter {
 };
 
 // swils the middle of photo, face look like alian
-class RadialDistortionFilter extends IImageFilter {
+class RadialDistortionFilter extends RenderScriptImageFilter {
 
     ScriptC_RadialDistortionFilter script;
 
@@ -482,7 +482,7 @@ class RadialDistortionFilter extends IImageFilter {
     }
 };
 
-class BigBrotherFilter extends IImageFilter {
+class BigBrotherFilter extends RenderScriptImageFilter {
 
     ScriptC_BigBrotherFilter script;
 
@@ -507,7 +507,7 @@ class BigBrotherFilter extends IImageFilter {
     }
 };
 
-class BannerFilter extends IImageFilter {
+class BannerFilter extends RenderScriptImageFilter {
 
     private boolean mIsHorizontal;
     ScriptC_BannerFilter script;
@@ -540,7 +540,7 @@ class BannerFilter extends IImageFilter {
 };
 
 // balck with white edges.
-class ParamEdgeDetectFilter extends IImageFilter {
+class ParamEdgeDetectFilter extends RenderScriptImageFilter {
     private final boolean DoGrayConversion;
 
     private final boolean DoInversion;
@@ -579,7 +579,7 @@ class ParamEdgeDetectFilter extends IImageFilter {
 };
 
 // like a poster
-class PosterizeFilter extends IImageFilter {
+class PosterizeFilter extends RenderScriptImageFilter {
     private final int mLevel;
     ScriptC_PosterizeFilter script;
 
@@ -612,7 +612,7 @@ class PosterizeFilter extends IImageFilter {
 };
 
 // perfect reflection horizontal
-class ReflectionFilter extends IImageFilter {
+class ReflectionFilter extends RenderScriptImageFilter {
 
     private boolean mIsHorizontal;
     ScriptC_ReflectionFilter script;
@@ -634,7 +634,7 @@ class ReflectionFilter extends IImageFilter {
     }
 };
 
-class PixelateFilter extends IImageFilter {
+class PixelateFilter extends RenderScriptImageFilter {
 
     private final int mSquareSize;
     ScriptC_PixelateFilter script;
@@ -662,31 +662,15 @@ class FakeFilter extends IImageFilter {
         super(context);
     }
 
-    protected void preProcess(Bitmap mBitmapIn) {
-
-    }
-
     @Override
     public boolean isFakeFilter() {
         return true;
     }
 
-
     @Override
     public Bitmap process(Bitmap bitmap) {
         bitmap.eraseColor(Color.TRANSPARENT);
         return bitmap;
-    }
-
-
-    @Override
-    protected final void _process() {
-
-    }
-
-    @Override
-    protected void _postProcess() {
-
     }
 };
 
@@ -696,24 +680,9 @@ class NoFilter extends IImageFilter {
         super(context);
     }
 
-    protected void preProcess(Bitmap mBitmapIn) {
-
-    }
-
     @Override
     public Bitmap process(Bitmap bitmap) {
         return bitmap;
-    }
-
-
-    @Override
-    protected final void _process() {
-
-    }
-
-    @Override
-    protected void _postProcess() {
-
     }
 };
 
