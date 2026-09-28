@@ -544,29 +544,75 @@ class ThresholdFilter extends IImageFilter {
 };
 
 // swils the middle of photo, face look like alian
-class RadialDistortionFilter extends RenderScriptImageFilter {
+// Ported to a GL ES 3.1 compute shader (see GlComputeImageFilter). Inverse-mapping bilinear
+// sample from the source texture; the manual 4-tap blend (rather than GL's native bilinear
+// sampler) intentionally matches the original's own hand-rolled clamp-to-edge + truncation
+// behavior exactly. `position` is deliberately allowed to go negative near the image center -
+// that sign flip is the actual pinch/swirl visual effect, not a bug - so it is NOT clamped.
+class RadialDistortionFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
 
-    ScriptC_RadialDistortionFilter script;
+    private static final String SHADER =
+            "#version 310 es\n" +
+            "layout(local_size_x = 8, local_size_y = 8) in;\n" +
+            "layout(rgba8, binding = 0) readonly uniform highp image2D uInput;\n" +
+            "layout(rgba8, binding = 1) writeonly uniform highp image2D uOutput;\n" +
+            "uniform ivec2 uSize;\n" +
+            "void main() {\n" +
+            "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n" +
+            "    if (pos.x >= uSize.x || pos.y >= uSize.y) return;\n" +
+            "    float radius = 0.5;\n" +
+            "    float distortion = 1.5;\n" +
+            "    int realXPos = uSize.x / 2;\n" +
+            "    int realYPos = uSize.y / 2;\n" +
+            "    float realRadius = float(min(uSize.x, uSize.y)) * radius;\n" +
+            "    float dx = float(pos.x - realXPos);\n" +
+            "    float dy = float(pos.y - realYPos);\n" +
+            "    float position = 1.0 - sqrt(dx * dx + dy * dy) / realRadius;\n" +
+            "    vec4 outColor;\n" +
+            "    if (position > 0.0) {\n" +
+            "        position = 1.0 - distortion * position * position;\n" +
+            "        float pos1 = dx * position + float(realXPos);\n" +
+            "        int x1 = int(pos1);\n" +
+            "        float pos3 = pos1 - float(x1);\n" +
+            "        int x2 = (pos3 > 0.0) ? x1 + 1 : x1;\n" +
+            "        float pos2 = dy * position + float(realYPos);\n" +
+            "        int y1 = int(pos2);\n" +
+            "        float pos4 = pos2 - float(y1);\n" +
+            "        int y2 = (pos4 > 0.0) ? y1 + 1 : y1;\n" +
+            "        x1 = clamp(x1, 0, uSize.x - 1);\n" +
+            "        x2 = clamp(x2, 0, uSize.x - 1);\n" +
+            "        y1 = clamp(y1, 0, uSize.y - 1);\n" +
+            "        y2 = clamp(y2, 0, uSize.y - 1);\n" +
+            "        vec3 c1 = imageLoad(uInput, ivec2(x1, y1)).rgb;\n" +
+            "        vec3 c2 = imageLoad(uInput, ivec2(x2, y1)).rgb;\n" +
+            "        vec3 c3 = imageLoad(uInput, ivec2(x2, y2)).rgb;\n" +
+            "        vec3 c4 = imageLoad(uInput, ivec2(x1, y2)).rgb;\n" +
+            "        vec3 blended = c1 * (1.0 - pos4) * (1.0 - pos3) + c2 * (1.0 - pos4) * pos3\n" +
+            "                     + c3 * pos4 * pos3 + c4 * pos4 * (1.0 - pos3);\n" +
+            "        outColor = vec4(blended, 1.0);\n" +
+            "    } else {\n" +
+            "        outColor = vec4(imageLoad(uInput, pos).rgb, 1.0);\n" +
+            "    }\n" +
+            "    imageStore(uOutput, pos, outColor);\n" +
+            "}\n";
 
     public RadialDistortionFilter(Context context) {
         super(context);
-        script = new ScriptC_RadialDistortionFilter(mRS);
-        ;
     }
 
     @Override
-    protected void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
-
-        script.invoke_filter();
-        mScript = script;
+    protected String getComputeShaderSource() {
+        return SHADER;
     }
 
     @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    protected void setUniforms(int program, int width, int height) {
+        android.opengl.GLES31.glUniform2i(android.opengl.GLES31.glGetUniformLocation(program, "uSize"), width, height);
+    }
+
+    @Override
+    protected int[] getWorkGroupCounts(int width, int height) {
+        return new int[]{(width + 7) / 8, (height + 7) / 8};
     }
 };
 
@@ -678,41 +724,60 @@ class BannerFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
 };
 
 // balck with white edges.
-class ParamEdgeDetectFilter extends RenderScriptImageFilter {
-    private final boolean DoGrayConversion;
+// Ported to a GL ES 3.1 compute shader (see GlComputeImageFilter). FilterFactory only ever
+// instantiates the default (Context)-arg constructor via reflection, so gDoGrayConversion=true,
+// gDoInversion=true, and the .rs file's own defaults for gThreshold/gK00/gK01/gK02 (0.25/1/2/1,
+// standard Sobel weights - _process() never sets these) are the only path this shader needs to
+// implement; the gDoGrayConversion=false (per-channel, no grayscale) branch is dead in practice.
+class ParamEdgeDetectFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
 
-    private final boolean DoInversion;
-
-    ScriptC_ParamEdgeDetectFilter script;
+    private static final String SHADER =
+            "#version 310 es\n" +
+            "layout(local_size_x = 8, local_size_y = 8) in;\n" +
+            "layout(rgba8, binding = 0) readonly uniform highp image2D uInput;\n" +
+            "layout(rgba8, binding = 1) writeonly uniform highp image2D uOutput;\n" +
+            "uniform ivec2 uSize;\n" +
+            "float grayscale(vec3 c) {\n" +
+            "    return c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722;\n" +
+            "}\n" +
+            "ivec2 clampPos(ivec2 p) {\n" +
+            "    return clamp(p, ivec2(0), uSize - ivec2(1));\n" +
+            "}\n" +
+            "void main() {\n" +
+            "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n" +
+            "    if (pos.x >= uSize.x || pos.y >= uSize.y) return;\n" +
+            "    float g1 = grayscale(imageLoad(uInput, clampPos(pos + ivec2(-1, -1))).rgb);\n" +
+            "    float g2 = grayscale(imageLoad(uInput, clampPos(pos + ivec2( 0, -1))).rgb);\n" +
+            "    float g3 = grayscale(imageLoad(uInput, clampPos(pos + ivec2( 1, -1))).rgb);\n" +
+            "    float g4 = grayscale(imageLoad(uInput, clampPos(pos + ivec2(-1,  0))).rgb);\n" +
+            "    float g5 = grayscale(imageLoad(uInput, clampPos(pos + ivec2( 1,  0))).rgb);\n" +
+            "    float g6 = grayscale(imageLoad(uInput, clampPos(pos + ivec2(-1,  1))).rgb);\n" +
+            "    float g7 = grayscale(imageLoad(uInput, clampPos(pos + ivec2( 0,  1))).rgb);\n" +
+            "    float g8 = grayscale(imageLoad(uInput, clampPos(pos + ivec2( 1,  1))).rgb);\n" +
+            "    float colorSum1 = g1 + 2.0 * g2 + g3 - g6 - 2.0 * g7 - g8;\n" +
+            "    float colorSum2 = g1 - g3 + 2.0 * g4 - 2.0 * g5 + g6 - g8;\n" +
+            "    float mag2 = colorSum1 * colorSum1 + colorSum2 * colorSum2;\n" +
+            "    float color = (mag2 > 0.25) ? 1.0 : 0.0;\n" +
+            "    imageStore(uOutput, pos, vec4(color, color, color, 1.0));\n" +
+            "}\n";
 
     public ParamEdgeDetectFilter(Context context) {
         super(context);
-        script = new ScriptC_ParamEdgeDetectFilter(mRS);
-        DoGrayConversion = true;
-        DoInversion = true;
-    }
-
-    public ParamEdgeDetectFilter(Context context, boolean doGrayConversion, boolean doInversion) {
-        super(context);
-        script = new ScriptC_ParamEdgeDetectFilter(mRS);
-        DoGrayConversion = doGrayConversion;
-        DoInversion = doInversion;
     }
 
     @Override
-    protected void _process() {
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gDoGrayConversion(DoGrayConversion ? 1 : 0);
-        script.set_gDoInversion(DoInversion ? 1 : 0);
-        script.set_gScript(script);
-        script.invoke_filter();
-        mScript = script;
+    protected String getComputeShaderSource() {
+        return SHADER;
     }
 
     @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    protected void setUniforms(int program, int width, int height) {
+        android.opengl.GLES31.glUniform2i(android.opengl.GLES31.glGetUniformLocation(program, "uSize"), width, height);
+    }
+
+    @Override
+    protected int[] getWorkGroupCounts(int width, int height) {
+        return new int[]{(width + 7) / 8, (height + 7) / 8};
     }
 };
 
