@@ -7,7 +7,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -68,6 +70,7 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
     Slicer slicer;
     boolean imageSaved = false;
     boolean saveImageSetting = false;
+    boolean showWatermarkSetting = true;
     private final ExecutorService mSaveExecutor = Executors.newSingleThreadExecutor();
 
     public GlOverlayFilter(Context context) {
@@ -234,6 +237,7 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
             try {
                 canvas.drawBitmap(result, 0, 0, null);
                 if (!slicer.isScanDone()) slicer.drawScanner(canvas);
+                if (showWatermarkSetting) drawWatermarkOverlay(canvas);
             } finally {
                 lock.unlock();
             }
@@ -255,6 +259,7 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
         slicer = Slicer.createSlicer(settings, mPreviewWidth, mPreviewHeight);
         filter.setDirection(settings.getDirection());
         saveImageSetting = settings.isSaveImage();
+        showWatermarkSetting = !settings.isRemoveWatermark();
     }
 
     private void createFilter() {
@@ -289,6 +294,46 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
         }
     }
 
+    private final Paint watermarkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    {
+        watermarkPaint.setTypeface(Typeface.DEFAULT_BOLD);
+    }
+
+    // Called every composited frame (drawCanvas runs per-frame during recording/preview), so the
+    // watermark rides along with the whole reveal, not just its final frame. Drawn the same way
+    // result/the scanner line are: in preview-space coordinates, under the canvas's inherited
+    // scale(1,-1)+transformationMatrix. That flip is what makes result's Bitmap-space pixels land
+    // correctly once GL samples this as a texture (Bitmap and GL disagree on which end is "up");
+    // resetting the matrix just for this draw (an earlier attempt) skips that cancellation and
+    // renders the text upside down, so it must inherit the same transform, not bypass it.
+    private void drawWatermarkOverlay(Canvas canvas) {
+        drawWatermarkText(canvas, mPreviewWidth, mPreviewHeight);
+    }
+
+    // Used for the still-image save path, where the target bitmap is in normal (untransformed)
+    // orientation already, so no matrix handling is needed.
+    private void drawWatermarkOnBitmap(Bitmap targetBitmap) {
+        if (targetBitmap == null || targetBitmap.isRecycled()) return;
+        Canvas canvas = new Canvas(targetBitmap);
+        drawWatermarkText(canvas, targetBitmap.getWidth(), targetBitmap.getHeight());
+    }
+
+    // Placed in two opposite corners rather than one, so a single crop can't remove it without
+    // also cutting deep into the actual content from the other side.
+    private void drawWatermarkText(Canvas canvas, int width, int height) {
+        watermarkPaint.setColor(Color.argb(160, 255, 255, 255));
+        watermarkPaint.setTextSize(height * 0.035f);
+        watermarkPaint.setShadowLayer(4f, 0f, 0f, Color.argb(160, 0, 0, 0));
+        String text = mContext.getString(R.string.app_name);
+        float textWidth = watermarkPaint.measureText(text);
+        float margin = width * 0.03f;
+
+        // Top-left
+        canvas.drawText(text, margin, margin + watermarkPaint.getTextSize(), watermarkPaint);
+        // Bottom-right
+        canvas.drawText(text, width - textWidth - margin, height - margin, watermarkPaint);
+    }
+
     private void saveImage(Bitmap bitmap) {
         try {
             if (bitmap == null || bitmap.isRecycled()) return;
@@ -297,6 +342,9 @@ public class GlOverlayFilter extends GlFilter implements Disposable {
             }
             imageSaved = true;
             Bitmap bmp2 = bitmap.copy(bitmap.getConfig(), true);
+            if (showWatermarkSetting) {
+                drawWatermarkOnBitmap(bmp2);
+            }
             mSaveExecutor.execute(() -> saveImageInBackground(bmp2));
         } catch (Exception e) {
         }

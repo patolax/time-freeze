@@ -53,11 +53,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.FilterView
         } else {
             holder.layoutHighlight.setVisibility(View.GONE);
         }
-        if (current.isPremium() && !premiumUser) {
-            holder.btnLock.setVisibility(View.VISIBLE);
-        } else {
-            holder.btnLock.setVisibility(View.INVISIBLE);
-        }
+        holder.btnLock.setVisibility(View.INVISIBLE);
         holder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -41,11 +42,11 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.time.freezer.BuildConfig;
 import com.time.freezer.MainActivity;
 import com.time.freezer.R;
 import com.time.freezer.base.utils.AppRatingDialog;
@@ -133,7 +134,7 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
         txtSaveImageSelection = binding.txtSaveImageSelection;
         btnGallery = binding.btnGallery;
         btnTry = binding.filiterPanel.btnTry;
-        btnBuy = binding.filiterPanel.btnBuy;
+        btnBuy = binding.btnBuy;
         btnShowTrailer = binding.filiterPanel.btnShowTrailer;
         txtFilterPanelLabel = binding.filiterPanel.txtFilterPanelLabel;
         toggleShape = binding.toggleShape;
@@ -154,9 +155,10 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
         selectedFilterItem = settings.getFilter();
 
         btnGallery.setOnClickListener(v -> onClickGallery());
-        btnBuy.setOnClickListener(v -> onClickRecord(false));
+        btnBuy.setOnClickListener(v -> onBuy());
         btnTry.setOnClickListener(v -> onTry());
         btnStart.setOnClickListener(v -> onClickRecord(false));
+        updateBuyButtonVisibility();
 
         Display display = getActivity().getWindowManager().getDefaultDisplay();
         DisplayMetrics outMetrics = new DisplayMetrics();
@@ -277,11 +279,11 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
                     if (temp.getProducts().contains(BillingConstants.Upgrade_SKU)) {
                         updrade = temp;
                         premiumUser = true;
-                        btnBuy.setVisibility(View.GONE);
                     } else {
                         updrade = null;
                         premiumUser = false;
                     }
+                    updateBuyButtonVisibility();
                     if (customAdapter != null) {
                         customAdapter.setPremiumUser(premiumUser);
                     }
@@ -427,10 +429,6 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
     public void onClickRecord(boolean reward) {
         if (checkPermissons()) return;
         if (listener != null) {
-             if (settings.getFilter().isPremium() && !premiumUser && !reward && !BuildConfig.DEBUG) {
-                showPermissonsAlert(settings.getFilter().getTitle());
-                return;
-            }
             if (settings.isBackgroundFilter()
                     && (settings.getImagePath() == null || settings.getImagePath() == "")) {
                 showImageRequiredAlert(settings.getFilter().getTitle());
@@ -443,6 +441,7 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
  			if(settings.isSaveImage()){
                 logEvent("SaveImage", "click");
             }
+            settings.setRemoveWatermark(premiumUser || reward);
             listener.loadCamera(settings);
         }
     }
@@ -483,7 +482,10 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
     public void onBuy() {
         logEvent("onBuy", "click");
 
-        billingClientLifecycle.launchBillingFlow(activity, BillingConstants.Upgrade_SKU);
+        int responseCode = billingClientLifecycle.launchBillingFlow(activity, BillingConstants.Upgrade_SKU);
+        if (responseCode != BillingClient.BillingResponseCode.OK) {
+            Toast.makeText(activity, "Couldn't open the purchase screen. Please try again in a moment.", Toast.LENGTH_LONG).show();
+        }
     }
 
     public void onOpenFilter() {
@@ -503,15 +505,15 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
         builder.setTitle("Premium Filter");
         builder.setMessage("Upgrade is required to use premium filters. " + "\n" +
                 "Upgrade or watch a reward ad to temporarily unlock the filter.");
-        builder.setPositiveButton("Cancel", (dialoginterface, i) -> dialoginterface.cancel());
+        builder.setPositiveButton("Upgrade", (dialoginterface, i) -> {
+            onBuy();
+            dialoginterface.cancel();
+        });
         builder.setNeutralButton("Watch Reward Ad", (dialoginterface, i) -> {
             activity.showAd();
             dialoginterface.cancel();
         });
-        builder.setNegativeButton("Upgrade", (dialoginterface, i) -> {
-            onBuy();
-            dialoginterface.cancel();
-        });
+        builder.setNegativeButton("Cancel", (dialoginterface, i) -> dialoginterface.cancel());
         builder.show();
     }
 
@@ -565,13 +567,11 @@ public class LandingFragment extends Fragment implements OnFilterClickListener, 
         logEvent("FilterChange", filterName);
         txtFilterSelection.setText(filterName);
         txtFilterPanelLabel.setText(filterName + " Filter");
-        if (selectedFilterItem.isPremium() && !premiumUser) {
-            btnBuy.setVisibility(View.VISIBLE);
-            btnTry.setVisibility(View.GONE);
-        } else {
-            btnBuy.setVisibility(View.GONE);
-            btnTry.setVisibility(View.VISIBLE);
-        }
+        btnTry.setVisibility(View.VISIBLE);
+    }
+
+    private void updateBuyButtonVisibility() {
+        binding.rowRemoveWatermark.setVisibility(premiumUser ? View.GONE : View.VISIBLE);
     }
 
     private void logEvent(String eventId, String data){

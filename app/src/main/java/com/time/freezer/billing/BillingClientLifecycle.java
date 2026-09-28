@@ -292,6 +292,7 @@ public class BillingClientLifecycle implements DefaultLifecycleObserver, Purchas
             Log.d(TAG, "launchBillingFlow: BillingResponse " + responseCode + " " + debugMessage);
             return responseCode;
         }
+        Log.e(TAG, "launchBillingFlow: product details not loaded yet for " + productId);
         return -1;
     }
 

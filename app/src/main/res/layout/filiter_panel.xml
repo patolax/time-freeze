@@ -69,18 +69,6 @@
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBuy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="@dimen/common_margin"
-            android:backgroundTint="@color/green"
-            android:text="Upgrade"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Button"
-            android:textColor="@color/snow"
-            android:textSize="@dimen/small_text"
-            android:theme="@style/MatButton" />
-
-        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

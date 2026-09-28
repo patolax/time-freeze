@@ -21,6 +21,7 @@ public class ScanSettings implements Parcelable {
     private int saveImage;
     private FilterItem filter;
     private boolean voiceCommandsEnabled = true;
+    private boolean removeWatermark = false;
     private String imagePath;
     private Bitmap backgroundImage;
 
@@ -114,6 +115,14 @@ public class ScanSettings implements Parcelable {
 
     public void setVoiceCommandsEnabled(boolean voiceCommandsEnabled) {
         this.voiceCommandsEnabled = voiceCommandsEnabled;
+    }
+
+    public boolean isRemoveWatermark() {
+        return removeWatermark;
+    }
+
+    public void setRemoveWatermark(boolean removeWatermark) {
+        this.removeWatermark = removeWatermark;
     }
 
     public String getImagePath() {
