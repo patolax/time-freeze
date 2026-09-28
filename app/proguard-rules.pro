@@ -17,6 +17,13 @@
 -keepattributes SourceFile,LineNumberTable
 -keep class com.time.freezer.filters.*
 { *; }
+
+# R8 full mode strips the no-arg constructor off Room's generated database classes since it can't
+# see that Room/WorkManager instantiate them reflectively - crashes every release build on launch
+# with "Failed to create an instance of androidx.work.impl.WorkDatabase" otherwise.
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
+}
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
