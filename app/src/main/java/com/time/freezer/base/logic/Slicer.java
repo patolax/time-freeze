@@ -18,7 +18,7 @@ public abstract class Slicer {
     protected Rect rawSliceRect;
     protected Rect scannerRect;
     protected int increment = 5;
-    protected int scannerWidth = 10;
+    protected int scannerWidth = 6;
     protected Point currentScannerPoint;
     protected Paint paintAntiAlias;
     protected Paint scannerPaint;
