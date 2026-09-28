@@ -29,6 +29,11 @@ add_definitions(-v -DANDROID -DOC_ARM_ASM)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra ${CMAKE_CXX_FLAGS}")
 
+# Play Console requires native libraries to be 16 KB page-size aligned. NDK r28+ makes this the
+# linker default; this project pins NDK r27 (app/build.gradle), which does not, so it must be
+# requested explicitly.
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
+
 #message( STATUS "Architecture: ${CMAKE_SYSTEM_PROCESSOR}" )
 #message( STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 #message( STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
