@@ -3,7 +3,6 @@ package com.time.freezer.filters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.renderscript.Float3;
 import android.util.Log;
 
 import com.google.android.renderscript.Toolkit;
@@ -395,43 +394,100 @@ class ColorQuantizeFilter extends IImageFilter {
     }
 };
 
-class ColorToneFilter extends RenderScriptImageFilter {
-    private final Float3 mRGB;
+// Ported to a GL ES 3.1 compute shader (see GlComputeImageFilter). FilterFactory only ever
+// instantiates the default (Context)-arg constructor via reflection, so gTone/gSaturation are
+// always the same fixed constants - HUE/SATURATION/LUM_MULTIPLIER below are the .rs kernel's
+// setup() (RGBtoHLS(gTone) + the per-frame luminance-curve multiplier) precomputed once on the
+// host in the exact same order of operations, rather than recomputed by every shader invocation.
+// The per-pixel root() still needs the real HLStoRGB conversion since L varies per pixel.
+class ColorToneFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
+    private static final float TONE_R = 0.1294f;
+    private static final float TONE_G = 0.6588f;
+    private static final float TONE_B = 0.9961f;
+    private static final float SATURATION_PARAM = 0.7529f;
 
-    private final float mSaturation;
-    ScriptC_ColorToneFilter script;
+    private static final float HUE;
+    private static final float SATURATION;
+    private static final float LUM_MULTIPLIER;
+
+    static {
+        float cmax = Math.max(TONE_R, Math.max(TONE_G, TONE_B));
+        float cmin = Math.min(TONE_R, Math.min(TONE_G, TONE_B));
+        float l = (cmax + cmin) / 2f;
+        float h;
+        float s;
+        if (cmax == cmin) {
+            h = 0f;
+            s = 0f;
+        } else {
+            float delta = cmax - cmin;
+            s = (l < 0.5f) ? delta / (cmax + cmin) : delta / (2f - cmax - cmin);
+            if (cmax == TONE_R) {
+                h = (TONE_G - TONE_B) / delta;
+            } else if (cmax == TONE_G) {
+                h = 2f + (TONE_B - TONE_R) / delta;
+            } else {
+                h = 4f + (TONE_R - TONE_G) / delta;
+            }
+            h /= 6f;
+            if (h < 0f) h += 1f;
+        }
+        HUE = h;
+        SATURATION = Math.min(s * (SATURATION_PARAM * SATURATION_PARAM), 1f);
+        LUM_MULTIPLIER = 1f + (128f - Math.abs(SATURATION_PARAM * 255f - 128f)) / 128f / 9f;
+    }
+
+    private static final String SHADER =
+            "#version 310 es\n" +
+            "layout(local_size_x = 8, local_size_y = 8) in;\n" +
+            "layout(rgba8, binding = 0) readonly uniform highp image2D uInput;\n" +
+            "layout(rgba8, binding = 1) writeonly uniform highp image2D uOutput;\n" +
+            "uniform ivec2 uSize;\n" +
+            "uniform float uHue;\n" +
+            "uniform float uSaturation;\n" +
+            "uniform float uLumMultiplier;\n" +
+            "float hlsValue(float n1, float n2, float h) {\n" +
+            "    if (h > 6.0) h -= 6.0; else if (h < 0.0) h += 6.0;\n" +
+            "    if (h < 1.0) return n1 + (n2 - n1) * h;\n" +
+            "    if (h < 3.0) return n2;\n" +
+            "    if (h < 4.0) return n1 + (n2 - n1) * (4.0 - h);\n" +
+            "    return n1;\n" +
+            "}\n" +
+            "vec3 hlsToRgb(float h, float l, float s) {\n" +
+            "    if (s == 0.0) return vec3(l, l, l);\n" +
+            "    float m2 = (l > 0.5) ? (l + s - l * s) : (l * (1.0 + s));\n" +
+            "    float m1 = 2.0 * l - m2;\n" +
+            "    return vec3(hlsValue(m1, m2, h * 6.0 + 2.0), hlsValue(m1, m2, h * 6.0), hlsValue(m1, m2, h * 6.0 - 2.0));\n" +
+            "}\n" +
+            "void main() {\n" +
+            "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n" +
+            "    if (pos.x >= uSize.x || pos.y >= uSize.y) return;\n" +
+            "    vec3 rgbIn = imageLoad(uInput, pos).rgb;\n" +
+            "    int idx = clamp(int((0.3 * rgbIn.r + 0.59 * rgbIn.g + 0.11 * rgbIn.b) * 255.0), 0, 255);\n" +
+            "    float l = min((float(idx) / 255.0) * uLumMultiplier, 1.0);\n" +
+            "    imageStore(uOutput, pos, vec4(hlsToRgb(uHue, l, uSaturation), 1.0));\n" +
+            "}\n";
 
     public ColorToneFilter(Context context) {
         super(context);
-        script = new ScriptC_ColorToneFilter(mRS);
-        mRGB = new Float3(0.1294f, 0.6588f, 0.9961f);
-        mSaturation = 0.7529f;
-
-    }
-
-    public ColorToneFilter(Context context, Float3 rgb, float saturation) {
-        super(context);
-        script = new ScriptC_ColorToneFilter(mRS);
-        mRGB = rgb;
-        mSaturation = saturation;
     }
 
     @Override
-    protected final void _process() {
-
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gScript(script);
-        script.set_gTone(mRGB);
-        script.set_gSaturation(mSaturation);
-
-        script.invoke_filter();
-        mScript = script;
+    protected String getComputeShaderSource() {
+        return SHADER;
     }
 
     @Override
-    protected void _postProcess() {
-        script.forEach_root(mInAllocation, mOutAllocation);
+    protected void setUniforms(int program, int width, int height) {
+        android.opengl.GLES31.glUniform2i(android.opengl.GLES31.glGetUniformLocation(program, "uSize"), width, height);
+        android.opengl.GLES31.glUniform1f(android.opengl.GLES31.glGetUniformLocation(program, "uHue"), HUE);
+        android.opengl.GLES31.glUniform1f(android.opengl.GLES31.glGetUniformLocation(program, "uSaturation"), SATURATION);
+        android.opengl.GLES31.glUniform1f(android.opengl.GLES31.glGetUniformLocation(program, "uLumMultiplier"), LUM_MULTIPLIER);
+    }
+
+    @Override
+    protected int[] getWorkGroupCounts(int width, int height) {
+        return new int[]{(width + 7) / 8, (height + 7) / 8};
     }
 };
 
@@ -888,25 +944,79 @@ class ReflectionFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
     }
 };
 
-class PixelateFilter extends RenderScriptImageFilter {
+// Ported to a GL ES 3.1 compute shader (see GlComputeImageFilter). The original .rs kernel's
+// "average" is actually a strictly-ordered sequential halving recurrence
+// (avg = (avg + next) / 2, column-major x-outer/y-inner scan order over each 20x20 block) -
+// not a true mean, and not associative, so it can't be computed as a parallel reduction.
+// Per an explicit product decision, this is replicated exactly (including the float32
+// precision quirk where only roughly the last ~24 of 400 samples meaningfully affect the
+// result) rather than "fixed" to a real average, since this migration's job is behavioral
+// parity. Dispatched one compute invocation per 20x20 output block (local_size 1x1) rather
+// than per-pixel, so each invocation can run the full sequential fold internally before
+// filling its own block. Unlike the original kernel, out-of-bounds reads at partial edge
+// blocks are skipped rather than read anyway (the original's unconditional rsGetElementAt
+// before its bounds check is undefined behavior in RS, not part of the algorithm worth
+// preserving).
+class PixelateFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
+    private static final int SQUARE_SIZE = 20;
 
-    private final int mSquareSize;
-    ScriptC_PixelateFilter script;
+    private static final String SHADER =
+            "#version 310 es\n" +
+            "layout(local_size_x = 1, local_size_y = 1) in;\n" +
+            "layout(rgba8, binding = 0) readonly uniform highp image2D uInput;\n" +
+            "layout(rgba8, binding = 1) writeonly uniform highp image2D uOutput;\n" +
+            "uniform ivec2 uSize;\n" +
+            "uniform int uSquareSize;\n" +
+            "void main() {\n" +
+            "    ivec2 blockPos = ivec2(gl_GlobalInvocationID.xy);\n" +
+            "    int ax = blockPos.x * uSquareSize;\n" +
+            "    int ay = blockPos.y * uSquareSize;\n" +
+            "    if (ax >= uSize.x || ay >= uSize.y) return;\n" +
+            "    float red = -1.0;\n" +
+            "    float green = -1.0;\n" +
+            "    float blue = -1.0;\n" +
+            "    for (int dx = 0; dx < uSquareSize; dx++) {\n" +
+            "        int x = ax + dx;\n" +
+            "        for (int dy = 0; dy < uSquareSize; dy++) {\n" +
+            "            int y = ay + dy;\n" +
+            "            if (x < uSize.x && y < uSize.y) {\n" +
+            "                vec3 s = imageLoad(uInput, ivec2(x, y)).rgb;\n" +
+            "                red   = (red   < 0.0) ? s.r : (red   + s.r) / 2.0;\n" +
+            "                green = (green < 0.0) ? s.g : (green + s.g) / 2.0;\n" +
+            "                blue  = (blue  < 0.0) ? s.b : (blue  + s.b) / 2.0;\n" +
+            "            }\n" +
+            "        }\n" +
+            "    }\n" +
+            "    vec4 color = vec4(red, green, blue, 1.0);\n" +
+            "    for (int dx = 0; dx < uSquareSize; dx++) {\n" +
+            "        int x = ax + dx;\n" +
+            "        if (x >= uSize.x) continue;\n" +
+            "        for (int dy = 0; dy < uSquareSize; dy++) {\n" +
+            "            int y = ay + dy;\n" +
+            "            if (y >= uSize.y) continue;\n" +
+            "            imageStore(uOutput, ivec2(x, y), color);\n" +
+            "        }\n" +
+            "    }\n" +
+            "}\n";
 
     public PixelateFilter(Context context) {
         super(context);
-        script = new ScriptC_PixelateFilter(mRS);
-        mSquareSize = 20;
     }
 
     @Override
-    protected void _process() {
+    protected String getComputeShaderSource() {
+        return SHADER;
+    }
 
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gSquareSize(mSquareSize);
-        script.invoke_process();
-        mScript = script;
+    @Override
+    protected void setUniforms(int program, int width, int height) {
+        android.opengl.GLES31.glUniform2i(android.opengl.GLES31.glGetUniformLocation(program, "uSize"), width, height);
+        android.opengl.GLES31.glUniform1i(android.opengl.GLES31.glGetUniformLocation(program, "uSquareSize"), SQUARE_SIZE);
+    }
+
+    @Override
+    protected int[] getWorkGroupCounts(int width, int height) {
+        return new int[]{(width + SQUARE_SIZE - 1) / SQUARE_SIZE, (height + SQUARE_SIZE - 1) / SQUARE_SIZE};
     }
 };
 
