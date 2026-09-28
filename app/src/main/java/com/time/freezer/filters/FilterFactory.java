@@ -614,35 +614,66 @@ class BigBrotherFilter extends IImageFilter {
     }
 };
 
-class BannerFilter extends RenderScriptImageFilter {
-
+// Ported to a GL ES 3.1 compute shader (see GlComputeImageFilter). The original .rs kernel used
+// invoke_process with nested loops that, worked through algebraically, always copy each pixel to
+// its own (x,y) except for a band-fill region - i.e. despite looking like a whole-allocation
+// operation, it's actually a pure per-pixel decision with no cross-pixel dependency.
+class BannerFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
     private boolean mIsHorizontal;
-    ScriptC_BannerFilter script;
+
+    private static final String SHADER =
+            "#version 310 es\n" +
+            "layout(local_size_x = 8, local_size_y = 8) in;\n" +
+            "layout(rgba8, binding = 0) readonly uniform highp image2D uInput;\n" +
+            "layout(rgba8, binding = 1) writeonly uniform highp image2D uOutput;\n" +
+            "uniform ivec2 uSize;\n" +
+            "uniform int uIsHorizontal;\n" +
+            "void main() {\n" +
+            "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n" +
+            "    if (pos.x >= uSize.x || pos.y >= uSize.y) return;\n" +
+            "    vec4 color;\n" +
+            "    if (uIsHorizontal == 1) {\n" +
+            "        int dh = uSize.y / 10;\n" +
+            "        int threshold = int(floor(float(dh - 1) / 1.1));\n" +
+            "        if (pos.y >= 10 * dh) {\n" +
+            "            color = imageLoad(uInput, pos);\n" +
+            "        } else {\n" +
+            "            int rowInBand = pos.y % dh;\n" +
+            "            color = (rowInBand <= threshold) ? imageLoad(uInput, pos) : vec4(0.7969, 0.7969, 0.7969, 1.0);\n" +
+            "        }\n" +
+            "    } else {\n" +
+            "        int dw = uSize.x / 10;\n" +
+            "        int threshold = int(floor(float(dw - 1) / 1.1));\n" +
+            "        if (pos.x >= 10 * dw) {\n" +
+            "            color = imageLoad(uInput, pos);\n" +
+            "        } else {\n" +
+            "            int colInBand = pos.x % dw;\n" +
+            "            color = (colInBand <= threshold) ? imageLoad(uInput, pos) : vec4(0.7969, 0.7969, 0.7969, 1.0);\n" +
+            "        }\n" +
+            "    }\n" +
+            "    imageStore(uOutput, pos, color);\n" +
+            "}\n";
 
     public BannerFilter(Context context) {
         super(context);
         mIsHorizontal = true;
-        script = new ScriptC_BannerFilter(mRS);
-    }
-
-    public BannerFilter(Context context, boolean isHorizontal) {
-        super(context);
-        mIsHorizontal = isHorizontal;
-        script = new ScriptC_BannerFilter(mRS);
     }
 
     @Override
-    protected void _process() {
+    protected String getComputeShaderSource() {
+        return SHADER;
+    }
+
+    @Override
+    protected void setUniforms(int program, int width, int height) {
         mIsHorizontal = direction != Constants.SCAN_DIRECTION_HORIZONTAL;
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gIsHorizontal(mIsHorizontal ? 1 : 0);
-        script.invoke_process();
-        mScript = script;
+        android.opengl.GLES31.glUniform2i(android.opengl.GLES31.glGetUniformLocation(program, "uSize"), width, height);
+        android.opengl.GLES31.glUniform1i(android.opengl.GLES31.glGetUniformLocation(program, "uIsHorizontal"), mIsHorizontal ? 1 : 0);
     }
 
     @Override
-    protected void _postProcess() {
+    protected int[] getWorkGroupCounts(int width, int height) {
+        return new int[]{(width + 7) / 8, (height + 7) / 8};
     }
 };
 
@@ -742,25 +773,53 @@ class PosterizeFilter extends IImageFilter {
 };
 
 // perfect reflection horizontal
-class ReflectionFilter extends RenderScriptImageFilter {
-
+// Ported to a GL ES 3.1 compute shader (see GlComputeImageFilter). The original .rs kernel's
+// mirror-fold, with its always-0.5 gOffset, reduces algebraically to a pure per-pixel coordinate
+// remap with no cross-pixel dependency.
+class ReflectionFilter extends com.time.freezer.base.gl.GlComputeImageFilter {
     private boolean mIsHorizontal;
-    ScriptC_ReflectionFilter script;
+
+    private static final String SHADER =
+            "#version 310 es\n" +
+            "layout(local_size_x = 8, local_size_y = 8) in;\n" +
+            "layout(rgba8, binding = 0) readonly uniform highp image2D uInput;\n" +
+            "layout(rgba8, binding = 1) writeonly uniform highp image2D uOutput;\n" +
+            "uniform ivec2 uSize;\n" +
+            "uniform int uIsHorizontal;\n" +
+            "void main() {\n" +
+            "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n" +
+            "    if (pos.x >= uSize.x || pos.y >= uSize.y) return;\n" +
+            "    ivec2 srcPos = pos;\n" +
+            "    if (uIsHorizontal == 1) {\n" +
+            "        int yOffset = uSize.y / 2;\n" +
+            "        if (pos.y < yOffset) srcPos.y = 2 * yOffset - 1 - pos.y;\n" +
+            "    } else {\n" +
+            "        int xOffset = uSize.x / 2;\n" +
+            "        if (pos.x < xOffset) srcPos.x = 2 * xOffset - 1 - pos.x;\n" +
+            "    }\n" +
+            "    imageStore(uOutput, pos, imageLoad(uInput, srcPos));\n" +
+            "}\n";
 
     public ReflectionFilter(Context context) {
         super(context);
-        script = new ScriptC_ReflectionFilter(mRS);
         mIsHorizontal = false;
     }
 
     @Override
-    protected void _process() {
+    protected String getComputeShaderSource() {
+        return SHADER;
+    }
+
+    @Override
+    protected void setUniforms(int program, int width, int height) {
         mIsHorizontal = direction != Constants.SCAN_DIRECTION_HORIZONTAL;
-        script.set_gIn(mInAllocation);
-        script.set_gOut(mOutAllocation);
-        script.set_gIsHorizontal(mIsHorizontal ? 1 : 0);
-        script.invoke_process();
-        mScript = script;
+        android.opengl.GLES31.glUniform2i(android.opengl.GLES31.glGetUniformLocation(program, "uSize"), width, height);
+        android.opengl.GLES31.glUniform1i(android.opengl.GLES31.glGetUniformLocation(program, "uIsHorizontal"), mIsHorizontal ? 1 : 0);
+    }
+
+    @Override
+    protected int[] getWorkGroupCounts(int width, int height) {
+        return new int[]{(width + 7) / 8, (height + 7) / 8};
     }
 };
 
